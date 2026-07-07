@@ -1,0 +1,29 @@
+# Default clustering config for Global Opinion QA group discovery.
+dataset:
+  name: Anthropic/llm_global_opinions
+  cache_dir: null  # HF cache dir; null = default
+
+# Countries to include when building opinion vectors.
+# null = all countries present in the dataset.
+countries: null
+
+features:
+  # Per-country vector: mean opinion distribution across questions.
+  method: mean_opinion_vector
+  normalize: true
+
+clustering:
+  algorithm: kmeans
+  n_clusters: 5
+  random_state: 42
+  n_init: 10
+
+stability:
+  enabled: false
+  n_bootstrap: 20
+  subsample_frac: 0.8
+
+export:
+  output_dir: outputs
+  run_name: null  # auto-generated timestamp if null
+  dataset_prefix: goqa_cluster  # -> goqa_cluster_0, goqa_cluster_1, ...

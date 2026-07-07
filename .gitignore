@@ -1,0 +1,28 @@
+# Virtual environment
+env/
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+
+# Clustering outputs (version artifacts separately)
+outputs/
+*.png
+
+# Hugging Face cache
+.cache/
+
+# Local secrets
+.env
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
