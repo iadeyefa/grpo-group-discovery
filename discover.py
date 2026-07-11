@@ -10,13 +10,16 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from src.clustering.cluster import clustering_metadata, run_clustering
-from src.clustering.random import run_random_clustering
+from src.clustering.dispatch import (
+    BASELINE_METHOD,
+    clustering_metadata,
+    resolve_method,
+    run_discovery,
+)
 from src.clustering.stability import bootstrap_stability
-from src.data.entities import attach_entity_ids, build_entity_table
+from src.data.entities import build_entity_table
 from src.data.load_goqa import load_goqa_preferences
 from src.export.artifacts import export_all
-from src.features.preference_vectors import build_preference_feature_matrix
 from src.utils import get_cache_dir, load_config, resolve_output_dir, setup_logging
 
 logger = logging.getLogger(__name__)
@@ -24,12 +27,12 @@ logger = logging.getLogger(__name__)
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Cluster preference profiles into groups for GRPO training."
+        description="Discover preference groups for GRPO training."
     )
     parser.add_argument(
         "--config",
         type=Path,
-        default=Path("config/default.yaml"),
+        default=Path("config/preference_similarity.yaml"),
         help="Path to YAML config",
     )
     parser.add_argument(
@@ -47,10 +50,12 @@ def main() -> int:
     config = load_config(args.config)
     dataset_cfg = config.get("dataset", {})
     entity_cfg = config.get("entities", {})
-    feature_cfg = config.get("features", {})
     cluster_cfg = config.get("clustering", {})
     stability_cfg = config.get("stability", {})
     export_cfg = config.get("export", {})
+
+    method = resolve_method(config)
+    logger.info("Discovery method: %s (floor baseline: %s)", method, BASELINE_METHOD)
 
     logger.info("Stage 1/4: loading preference records")
     preference_df = load_goqa_preferences(
@@ -70,64 +75,34 @@ def main() -> int:
         random_state=entity_cfg.get("random_state", cluster_cfg.get("random_state", 42)),
     )
 
-    algorithm = cluster_cfg.get("algorithm", "kmeans")
-    n_clusters = cluster_cfg.get("n_clusters", 5)
-    random_state = cluster_cfg.get("random_state", 42)
+    logger.info("Stage 3/4: running discovery (%s)", method)
+    assignments, extras = run_discovery(
+        method=method,
+        preference_df=preference_df,
+        entity_registry=entity_registry,
+        config=config,
+    )
 
-    if algorithm == "random":
-        logger.info(
-            "Stage 3/4: random baseline — %d entities -> %d clusters "
-            "(preference-blind null hypothesis)",
-            len(entity_registry),
-            n_clusters,
-        )
-        assignments = run_random_clustering(
-            entities=entity_registry,
-            n_clusters=n_clusters,
-            random_state=random_state,
-        )
-        metadata = clustering_metadata(
-            config,
-            assignments,
-            feature_dim=0,
-            baseline="random",
-            uses_preference_features=False,
-        )
-    else:
-        logger.info("Stage 3/4: building preference feature vectors")
-        preference_with_entities = attach_entity_ids(preference_df, entity_registry)
-        features_df = build_preference_feature_matrix(
-            preference_with_entities,
-            method=feature_cfg.get("method", "mean_opinion_vector"),
-            normalize_vectors=feature_cfg.get("normalize", True),
-        )
+    metadata = clustering_metadata(
+        config,
+        assignments,
+        feature_dim=extras["feature_dim"],
+        discovery_method=extras["discovery_method"],
+        discovery_tier=extras["discovery_tier"],
+        uses_preference_features=extras["uses_preference_features"],
+    )
 
-        logger.info("Stage 3/4: clustering by preference similarity (%s)", algorithm)
-        assignments = run_clustering(
+    features_df = extras.get("features_df")
+    if stability_cfg.get("enabled", False) and features_df is not None:
+        logger.info("Running bootstrap stability check")
+        metadata["stability"] = bootstrap_stability(
             features_df,
-            algorithm=algorithm,
-            n_clusters=n_clusters,
-            random_state=random_state,
+            n_clusters=cluster_cfg.get("n_clusters", 5),
+            n_bootstrap=stability_cfg.get("n_bootstrap", 20),
+            subsample_frac=stability_cfg.get("subsample_frac", 0.8),
+            random_state=cluster_cfg.get("random_state", 42),
             n_init=cluster_cfg.get("n_init", 10),
         )
-
-        metadata = clustering_metadata(
-            config,
-            assignments,
-            feature_dim=features_df.shape[1],
-            uses_preference_features=True,
-        )
-
-        if stability_cfg.get("enabled", False):
-            logger.info("Running bootstrap stability check")
-            metadata["stability"] = bootstrap_stability(
-                features_df,
-                n_clusters=n_clusters,
-                n_bootstrap=stability_cfg.get("n_bootstrap", 20),
-                subsample_frac=stability_cfg.get("subsample_frac", 0.8),
-                random_state=random_state,
-                n_init=cluster_cfg.get("n_init", 10),
-            )
 
     logger.info("Stage 4/4: exporting artifacts")
     output_dir = resolve_output_dir(config)

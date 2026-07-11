@@ -1,0 +1,21 @@
+# Method 2: Chosen-rejected embedding sets (Fain) — not yet implemented.
+
+dataset:
+  name: Anthropic/llm_global_opinions
+  cache_dir: null
+  source_groups: null
+
+entities:
+  mode: simulated
+  n_simulated_per_group: 10
+  random_state: 42
+
+clustering:
+  method: embedding_sets
+  n_clusters: 5
+  random_state: 42
+
+export:
+  output_dir: outputs
+  run_name: embedding_sets
+  dataset_prefix: goqa_cluster

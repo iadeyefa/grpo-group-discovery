@@ -1,0 +1,21 @@
+# Method 3: Sparse matrix factorization + latent clustering — not yet implemented.
+
+dataset:
+  name: Anthropic/llm_global_opinions
+  cache_dir: null
+  source_groups: null
+
+entities:
+  mode: simulated
+  n_simulated_per_group: 10
+  random_state: 42
+
+clustering:
+  method: matrix_factorization
+  n_clusters: 5
+  random_state: 42
+
+export:
+  output_dir: outputs
+  run_name: matrix_factorization
+  dataset_prefix: goqa_cluster

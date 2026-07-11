@@ -8,7 +8,7 @@ Exports from `discover.py` are written to `outputs/<run_name>/`.
 |------|-------------|
 | `cluster_assignments.parquet` | `entity_id`, `cluster_id` — clustering output only |
 | `entity_registry.json` | `entity_id` → HF `source_group` (downstream + eval, not clustering) |
-| `metadata.json` | Run config, baseline type, cluster sizes |
+| `metadata.json` | Run config, `discovery_method`, `discovery_tier`, cluster sizes |
 | `dataset_group_map.json` | `goqa_cluster_N` → HF source_group labels for grpo-reproduction |
 | `evaluation_source_groups.json` | Post-hoc source_group counts per cluster |
 | `cluster_sizes.png` | Bar chart of entities per cluster |
@@ -17,8 +17,8 @@ Exports from `discover.py` are written to `outputs/<run_name>/`.
 
 1. **Load** preference records (opinion distributions per question per source group).
 2. **Register** opaque `entity_id` values from preference data.
-3. **Cluster** on preference similarity (feature vectors) or randomly (baseline).
-4. **Evaluate** using `evaluation_source_groups.json` — hidden population structure never enters clustering.
+3. **Discover** groups via `preference_similarity` (floor baseline) or methods 1–5.
+4. **Evaluate** using `evaluation_source_groups.json` — hidden population structure never enters discovery.
 
 ## `cluster_assignments.parquet`
 

@@ -1,0 +1,22 @@
+# Method 1: Cross-predictive similarity clustering (Fain) — not yet implemented.
+# sim(A,B) = avg(Acc(pred A|B)-Acc(pred A), Acc(pred B|A)-Acc(pred B))
+
+dataset:
+  name: Anthropic/llm_global_opinions
+  cache_dir: null
+  source_groups: null
+
+entities:
+  mode: simulated
+  n_simulated_per_group: 10
+  random_state: 42
+
+clustering:
+  method: cross_predictive
+  n_clusters: 5
+  random_state: 42
+
+export:
+  output_dir: outputs
+  run_name: cross_predictive
+  dataset_prefix: goqa_cluster

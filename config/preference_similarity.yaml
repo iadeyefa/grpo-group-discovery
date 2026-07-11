@@ -1,13 +1,13 @@
-# Default clustering config — groups entities by preference similarity.
+# Floor baseline — minimum preference-aware group discovery.
+# Clusters entities by mean-opinion-vector similarity (KMeans).
+# Advanced methods (cross_predictive, embedding_sets, etc.) should beat this.
+
 dataset:
   name: Anthropic/llm_global_opinions
   cache_dir: null
-  # HF population group filter; null = all groups present in dataset.
   source_groups: null
 
 entities:
-  # observed  — one entity per source group with preference records
-  # simulated — synthetic individuals per source group (for future methods)
   mode: observed
   n_simulated_per_group: 10
   random_state: 42
@@ -17,7 +17,7 @@ features:
   normalize: true
 
 clustering:
-  algorithm: kmeans
+  method: preference_similarity
   n_clusters: 5
   random_state: 42
   n_init: 10

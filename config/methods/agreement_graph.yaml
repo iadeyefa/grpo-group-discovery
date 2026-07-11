@@ -1,0 +1,21 @@
+# Method 5: Agreement graph on overlapping prompts — not yet implemented.
+
+dataset:
+  name: Anthropic/llm_global_opinions
+  cache_dir: null
+  source_groups: null
+
+entities:
+  mode: observed
+  n_simulated_per_group: 10
+  random_state: 42
+
+clustering:
+  method: agreement_graph
+  n_clusters: 5
+  random_state: 42
+
+export:
+  output_dir: outputs
+  run_name: agreement_graph
+  dataset_prefix: goqa_cluster

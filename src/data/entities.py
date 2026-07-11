@@ -68,8 +68,7 @@ def _build_simulated_entities(
     """
     Synthetic individuals sampled per source group for individual-level experiments.
 
-    Preference-based methods will attach sampled opinion records to each entity;
-    the random baseline only needs the opaque entity_id list.
+    Preference-based methods will attach sampled opinion records to each entity.
     """
     if n_simulated_per_group <= 0:
         raise ValueError("n_simulated_per_group must be positive")
