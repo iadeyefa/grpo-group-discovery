@@ -1,0 +1,33 @@
+# Random cluster baseline — preference-blind null hypothesis.
+#
+# Assigns entities to K groups without using preference features or source_group
+# labels. Compare GRPO on discovered groups against this and single-group IPO/DPO.
+# Use evaluation_source_groups.json post-hoc to measure hidden-structure alignment.
+
+dataset:
+  name: Anthropic/llm_global_opinions
+  cache_dir: null
+  source_groups: null
+
+entities:
+  mode: observed
+  n_simulated_per_group: 10
+  random_state: 42
+
+features:
+  # Ignored for random baseline; kept for config parity with other runs.
+  method: mean_opinion_vector
+  normalize: true
+
+clustering:
+  algorithm: random
+  n_clusters: 5
+  random_state: 42
+
+stability:
+  enabled: false
+
+export:
+  output_dir: outputs
+  run_name: random_baseline
+  dataset_prefix: goqa_cluster

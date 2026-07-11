@@ -1,14 +1,18 @@
-# Default clustering config for Global Opinion QA group discovery.
+# Default clustering config — groups entities by preference similarity.
 dataset:
   name: Anthropic/llm_global_opinions
-  cache_dir: null  # HF cache dir; null = default
+  cache_dir: null
+  # HF population group filter; null = all groups present in dataset.
+  source_groups: null
 
-# Countries to include when building opinion vectors.
-# null = all countries present in the dataset.
-countries: null
+entities:
+  # observed  — one entity per source group with preference records
+  # simulated — synthetic individuals per source group (for future methods)
+  mode: observed
+  n_simulated_per_group: 10
+  random_state: 42
 
 features:
-  # Per-country vector: mean opinion distribution across questions.
   method: mean_opinion_vector
   normalize: true
 
@@ -25,5 +29,5 @@ stability:
 
 export:
   output_dir: outputs
-  run_name: null  # auto-generated timestamp if null
-  dataset_prefix: goqa_cluster  # -> goqa_cluster_0, goqa_cluster_1, ...
+  run_name: null
+  dataset_prefix: goqa_cluster

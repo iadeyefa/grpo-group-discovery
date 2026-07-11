@@ -6,19 +6,36 @@ Exports from `discover.py` are written to `outputs/<run_name>/`.
 
 | File | Description |
 |------|-------------|
-| `cluster_assignments.parquet` | One row per country: `country`, `cluster_id` |
-| `metadata.json` | Run config, cluster sizes, dataset names |
-| `dataset_group_map.json` | Maps `goqa_cluster_N` → list of countries |
-| `cluster_sizes.png` | Bar chart of countries per cluster |
+| `cluster_assignments.parquet` | `entity_id`, `cluster_id` — clustering output only |
+| `entity_registry.json` | `entity_id` → HF `source_group` (downstream + eval, not clustering) |
+| `metadata.json` | Run config, baseline type, cluster sizes |
+| `dataset_group_map.json` | `goqa_cluster_N` → HF source_group labels for grpo-reproduction |
+| `evaluation_source_groups.json` | Post-hoc source_group counts per cluster |
+| `cluster_sizes.png` | Bar chart of entities per cluster |
+
+## Clustering contract
+
+1. **Load** preference records (opinion distributions per question per source group).
+2. **Register** opaque `entity_id` values from preference data.
+3. **Cluster** on preference similarity (feature vectors) or randomly (baseline).
+4. **Evaluate** using `evaluation_source_groups.json` — hidden population structure never enters clustering.
 
 ## `cluster_assignments.parquet`
 
 ```
-country                              cluster_id
-Nigeria                              0
-Egypt                                0
-China                                1
-...
+entity_id    cluster_id
+entity_0000  0
+entity_0001  2
+entity_0002  1
+```
+
+## `entity_registry.json`
+
+```json
+{
+  "entity_0000": "Nigeria",
+  "entity_0001": "Egypt"
+}
 ```
 
 ## `dataset_group_map.json`
@@ -30,31 +47,24 @@ China                                1
 }
 ```
 
-## Integration with grpo-reproduction
+Values are HF source_group labels used by grpo-reproduction to filter training data.
 
-This repo produces **group definitions only**. Training still happens in [grpo-reproduction](https://github.com/...).
+## `evaluation_source_groups.json`
 
-To consume discovered groups:
-
-1. Copy `dataset_group_map.json` into the training repo (or reference by path).
-2. Add a loader branch in `src/preference_datasets.py` that:
-   - Reads the cluster map
-   - Filters `get_goqa` by country lists per `goqa_cluster_N`
-3. Train with `datasets=[goqa_cluster_0, goqa_cluster_1, ...]` as in the fixed-country setup.
-
-The per-prompt data contract in grpo-reproduction is unchanged:
-
-```python
+```json
 {
-  prompt: {
-    "responses": [...],
-    "pairs": [(chosen_idx, rejected_idx), ...],
-    "sft_target": "A",
-  }
+  "0": {"Egypt": 1, "Nigeria": 1},
+  "1": {"China": 1, "Japan": 1}
 }
 ```
 
+## Integration with grpo-reproduction
+
+1. Copy `dataset_group_map.json` and `entity_registry.json` into the training repo.
+2. Filter `get_goqa` by source_group lists per `goqa_cluster_N`.
+3. Train with `datasets=[goqa_cluster_0, goqa_cluster_1, ...]`.
+
 ## Versioning
 
-- Commit or store `metadata.json` alongside W&B runs.
+- Commit `metadata.json` alongside W&B runs.
 - Re-clustering should produce a new `run_name`; do not overwrite prior artifacts.

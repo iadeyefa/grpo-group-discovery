@@ -2,7 +2,7 @@
 
 Discover and export preference groups for GRPO training from opinion/preference data.
 
-Pre-GRPO clustering pipeline: load Global Opinion QA → build country features → cluster → export artifacts for [grpo-reproduction](https://github.com/) (SFT → IPO / GR-IPO).
+Pipeline: load GOQA preference records → build per-entity feature vectors → cluster by similarity → export artifacts for [grpo-reproduction](https://github.com/) (SFT → IPO / GR-IPO).
 
 ## Setup
 
@@ -15,11 +15,14 @@ pip install -r requirements.txt
 ## Run
 
 ```bash
-# Default config (K=5 KMeans on mean opinion vectors)
+# Preference-similarity clustering (KMeans on opinion vectors)
 sh scripts/run_clustering.sh
 
+# Random baseline (preference-blind null hypothesis)
+sh scripts/run_random_baseline.sh
+
 # Custom config / debug logs
-python discover.py --config config/default.yaml --verbose
+python3 discover.py --config config/default.yaml --verbose
 ```
 
 Outputs land in `outputs/<run_name>/` — see [docs/artifact-format.md](docs/artifact-format.md).
@@ -30,27 +33,30 @@ Outputs land in `outputs/<run_name>/` — see [docs/artifact-format.md](docs/art
 Anthropic/llm_global_opinions
         │
         ▼
-  load_goqa.py          # per-country opinion rows
+  load_goqa.py              # preference records per source group
         │
         ▼
-  opinion_vectors.py    # country feature matrix
+  entities.py               # opaque entity_id registry
         │
         ▼
-  cluster.py            # KMeans → cluster_id per country
+  preference_vectors.py     # per-entity opinion feature matrix
         │
         ▼
-  artifacts.py          # parquet + JSON + plot
+  cluster.py / random.py    # similarity clustering or random baseline
         │
         ▼
-  grpo-reproduction     # train on goqa_cluster_0, ...
+  artifacts.py              # parquet + JSON + evaluation breakdown
+        │
+        ▼
+  grpo-reproduction         # train on goqa_cluster_0, ...
 ```
 
 ## Config
 
 Edit `config/default.yaml`:
 
-- `clustering.n_clusters` — number of groups (default 5, matching paper)
-- `countries` — restrict which countries to cluster (`null` = all)
+- `clustering.n_clusters` — number of groups (default 5)
+- `dataset.source_groups` — filter HF population groups (`null` = all)
 - `export.dataset_prefix` — prefix for downstream dataset names
 
 ## Project layout

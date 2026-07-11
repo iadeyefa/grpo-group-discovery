@@ -23,29 +23,28 @@ def bootstrap_stability(
     """
     Measure clustering stability via bootstrap ARI against a reference fit.
 
-    Subsamples countries (not features) and compares label agreement.
+    Subsamples entities (not features) and compares label agreement.
     """
     rng = np.random.default_rng(random_state)
-    countries = features_df.index.tolist()
+    entity_ids = features_df.index.tolist()
     X = features_df.to_numpy()
 
     reference = KMeans(
         n_clusters=n_clusters, random_state=random_state, n_init=n_init
     ).fit(X)
-    ref_labels = dict(zip(countries, reference.labels_))
+    ref_labels = dict(zip(entity_ids, reference.labels_))
 
     scores: list[float] = []
     for b in range(n_bootstrap):
-        n_sample = max(n_clusters, int(len(countries) * subsample_frac))
-        idx = rng.choice(len(countries), size=n_sample, replace=False)
-        sample_countries = [countries[i] for i in idx]
+        n_sample = max(n_clusters, int(len(entity_ids) * subsample_frac))
+        idx = rng.choice(len(entity_ids), size=n_sample, replace=False)
+        sample_ids = [entity_ids[i] for i in idx]
         X_sub = X[idx]
 
         model = KMeans(n_clusters=n_clusters, random_state=random_state + b, n_init=n_init)
         sub_labels = model.fit_predict(X_sub)
 
-        # Compare on overlapping countries using reference labels.
-        ref_sub = [ref_labels[c] for c in sample_countries]
+        ref_sub = [ref_labels[e] for e in sample_ids]
         ari = adjusted_rand_score(ref_sub, sub_labels)
         scores.append(ari)
         logger.debug("Bootstrap %d/%d ARI=%.3f", b + 1, n_bootstrap, ari)

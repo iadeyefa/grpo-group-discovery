@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run country clustering with default config.
+# Run preference-similarity clustering with default config.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
