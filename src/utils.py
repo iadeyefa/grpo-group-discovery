@@ -29,7 +29,7 @@ def load_config(path: str | Path) -> dict[str, Any]:
         return yaml.safe_load(f)
 
 
-def resolve_output_dir(config: dict[str, Any]) -> Path:
+def resolve_output_dir(config: dict[str, Any], overwrite: bool = False) -> Path:
     """Build a versioned output directory for this clustering run."""
     export_cfg = config.get("export", {})
     base = Path(export_cfg.get("output_dir", "outputs"))
@@ -37,6 +37,10 @@ def resolve_output_dir(config: dict[str, Any]) -> Path:
     if not run_name:
         run_name = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     out = REPO_ROOT / base / run_name
+    if overwrite and out.exists():
+        import shutil
+        shutil.rmtree(out)
+        logging.info("Overwriting existing output directory: %s", out)
     out.mkdir(parents=True, exist_ok=True)
     logging.debug("Output directory: %s", out)
     return out

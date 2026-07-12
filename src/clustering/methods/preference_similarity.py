@@ -55,7 +55,6 @@ def run(
         n_init=n_init,
     )
     labels = model.fit_predict(X)
-
     assignments = pd.DataFrame(
         {
             "entity_id": features_df.index.tolist(),

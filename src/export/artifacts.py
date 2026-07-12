@@ -21,23 +21,40 @@ def export_assignments(assignments: pd.DataFrame, output_dir: Path) -> Path:
     return path
 
 
-def export_entity_registry(entity_registry: pd.DataFrame, output_dir: Path) -> Path:
-    """
-    Map opaque entity_id to HF source_group label.
-
-    Used for downstream training filters and post-hoc evaluation — not clustering.
-    """
-    mapping = (
-        entity_registry[["entity_id", "source_group"]]
-        .drop_duplicates()
-        .sort_values("entity_id")
-        .set_index("entity_id")["source_group"]
-        .to_dict()
+def export_cluster_records(
+    assignments: pd.DataFrame,
+    entity_registry: pd.DataFrame,
+    preference_df: pd.DataFrame,
+    output_dir: Path,
+) -> Path:
+    """Write per-cluster preference records with question text and distributions."""
+    merged = assignments.merge(
+        entity_registry[["entity_id"]].merge(
+            preference_df[["question", "options", "prob_y"]].reset_index(drop=True),
+            left_index=True,
+            right_index=True,
+        ),
+        on="entity_id",
+        how="left",
     )
-    path = output_dir / "entity_registry.json"
+    merged = merged.sort_values(["cluster_id", "entity_id"]).reset_index(drop=True)
+
+    clusters: dict[str, list[dict[str, Any]]] = {}
+    for cluster_id, group in merged.groupby("cluster_id"):
+        clusters[str(int(cluster_id))] = [
+            {
+                "entity_id": row.entity_id,
+                "question": row.question,
+                "options": row.options,
+                "prob_y": row.prob_y.tolist() if hasattr(row.prob_y, "tolist") else row.prob_y,
+            }
+            for row in group.itertuples(index=False)
+        ]
+
+    path = output_dir / "cluster_records.json"
     with path.open("w") as f:
-        json.dump(mapping, f, indent=2, sort_keys=True)
-    logger.info("Wrote %s (%d entities)", path, len(mapping))
+        json.dump(clusters, f, indent=2, sort_keys=True)
+    logger.info("Wrote %s (%d clusters)", path, len(clusters))
     return path
 
 
@@ -47,67 +64,6 @@ def export_metadata(metadata: dict[str, Any], output_dir: Path) -> Path:
     with path.open("w") as f:
         json.dump(metadata, f, indent=2, sort_keys=True)
     logger.info("Wrote %s", path)
-    return path
-
-
-def export_cluster_map(
-    assignments: pd.DataFrame,
-    entity_registry: pd.DataFrame,
-    dataset_prefix: str,
-    output_dir: Path,
-) -> Path:
-    """
-    Write grpo-reproduction dataset name mapping.
-
-    Maps goqa_cluster_N -> unique HF source_group labels for entities in that cluster.
-    Downstream training filters GOQA rows by these source_group values.
-    """
-    merged = assignments.merge(
-        entity_registry[["entity_id", "source_group"]].drop_duplicates(),
-        on="entity_id",
-        how="left",
-    )
-    mapping: dict[str, list[str]] = {}
-    for cluster_id, group in merged.groupby("cluster_id"):
-        key = f"{dataset_prefix}_{int(cluster_id)}"
-        mapping[key] = sorted(group["source_group"].unique().tolist())
-
-    path = output_dir / "dataset_group_map.json"
-    with path.open("w") as f:
-        json.dump(mapping, f, indent=2, sort_keys=True)
-    logger.info("Wrote %s (%d groups)", path, len(mapping))
-    return path
-
-
-def export_evaluation_source_groups(
-    assignments: pd.DataFrame,
-    entity_registry: pd.DataFrame,
-    output_dir: Path,
-) -> Path:
-    """
-    Post-hoc source_group breakdown per cluster for hidden-structure evaluation.
-
-    Clustering never uses this; it compares discovered groups against salient
-    population structure after the fact.
-    """
-    merged = assignments.merge(
-        entity_registry[["entity_id", "source_group"]].drop_duplicates(),
-        on="entity_id",
-        how="left",
-    )
-    breakdown: dict[str, dict[str, int]] = {}
-    for cluster_id, group in merged.groupby("cluster_id"):
-        counts = group["source_group"].value_counts().to_dict()
-        breakdown[str(int(cluster_id))] = {k: int(v) for k, v in counts.items()}
-
-    path = output_dir / "evaluation_source_groups.json"
-    with path.open("w") as f:
-        json.dump(breakdown, f, indent=2, sort_keys=True)
-    logger.info(
-        "Wrote %s (post-hoc source_group breakdown for %d clusters)",
-        path,
-        len(breakdown),
-    )
     return path
 
 
@@ -130,26 +86,15 @@ def plot_cluster_sizes(assignments: pd.DataFrame, output_dir: Path) -> Path:
 def export_all(
     assignments: pd.DataFrame,
     entity_registry: pd.DataFrame,
+    preference_df: pd.DataFrame,
     metadata: dict[str, Any],
     output_dir: Path,
-    dataset_prefix: str,
 ) -> dict[str, Path]:
     """Write all standard artifacts for a clustering run."""
     paths = {
         "assignments": export_assignments(assignments, output_dir),
-        "entity_registry": export_entity_registry(entity_registry, output_dir),
+        "cluster_records": export_cluster_records(assignments, entity_registry, preference_df, output_dir),
         "metadata": export_metadata(metadata, output_dir),
-        "dataset_map": export_cluster_map(
-            assignments,
-            entity_registry,
-            dataset_prefix,
-            output_dir,
-        ),
-        "evaluation_source_groups": export_evaluation_source_groups(
-            assignments,
-            entity_registry,
-            output_dir,
-        ),
         "plot": plot_cluster_sizes(assignments, output_dir),
     }
     return paths

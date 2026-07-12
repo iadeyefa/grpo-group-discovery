@@ -72,10 +72,10 @@ def build_preference_frame(
         selections = _parse_selections(df.loc[i, "selections"])
         options = [str(opt) for opt in ast.literal_eval(options_raw)]
 
-        for source_group in source_groups:
-            if source_group not in selections:
+        for original_source_group in source_groups:
+            if original_source_group not in selections:
                 continue
-            prob_y = selections[source_group]
+            prob_y = selections[original_source_group]
             if prob_y is None or len(prob_y) == 0 or np.sum(prob_y) == 0:
                 continue
             rows.append(
@@ -83,7 +83,7 @@ def build_preference_frame(
                     "qkey": df.loc[i, "qkey"],
                     "question": question,
                     "options": options,
-                    "source_group": source_group,
+                    "source_group": original_source_group,
                     "prob_y": np.asarray(prob_y, dtype=np.float64),
                 }
             )
@@ -96,7 +96,6 @@ def build_preference_frame(
         out["qkey"].nunique() if len(out) else 0,
     )
     return out
-
 
 def load_goqa_preferences(
     dataset_name: str = "Anthropic/llm_global_opinions",

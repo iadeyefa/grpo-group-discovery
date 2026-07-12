@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 ENTITY_MODE_OBSERVED = "observed"
 ENTITY_MODE_SIMULATED = "simulated"
+ENTITY_MODE_BLIND = "blind"
 
 
 def build_entity_table(
@@ -37,9 +38,11 @@ def build_entity_table(
             n_simulated_per_group=n_simulated_per_group,
             random_state=random_state,
         )
+    if mode == ENTITY_MODE_BLIND:
+        return _build_blind_entities(preference_df)
     raise ValueError(
         f"Unsupported entity mode: {mode!r}. "
-        f"Expected {ENTITY_MODE_OBSERVED!r} or {ENTITY_MODE_SIMULATED!r}."
+        f"Expected {ENTITY_MODE_OBSERVED!r}, {ENTITY_MODE_SIMULATED!r}, or {ENTITY_MODE_BLIND!r}."
     )
 
 
@@ -96,6 +99,18 @@ def _build_simulated_entities(
     return entities
 
 
+def _build_blind_entities(preference_df: pd.DataFrame) -> pd.DataFrame:
+    """One anonymous entity per preference row for blind clustering."""
+    entities = pd.DataFrame(
+        {
+            "entity_id": [_opaque_id(i) for i in range(len(preference_df))],
+        }
+    )
+    logger.info("Registered %d blind entities from preference rows", len(entities))
+    logger.debug("Blind entity registry: %s", entities.to_dict("records"))
+    return entities
+
+
 def _opaque_id(index: int) -> str:
     """Stable opaque entity identifier — no demographic information encoded."""
     return f"entity_{index:04d}"
@@ -106,11 +121,25 @@ def attach_entity_ids(
     entities: pd.DataFrame,
 ) -> pd.DataFrame:
     """Join entity_id onto preference rows via source_group (for feature building)."""
-    registry = entities[["entity_id", "source_group"]].drop_duplicates()
-    merged = preference_df.merge(registry, on="source_group", how="inner")
+    if "source_group" in entities.columns:
+        registry = entities[["entity_id", "source_group"]].drop_duplicates()
+        merged = preference_df.merge(registry, on="source_group", how="inner")
+        logger.debug(
+            "Attached entity_id to %d / %d preference rows via source_group",
+            len(merged),
+            len(preference_df),
+        )
+        return merged
+
+    if len(entities) != len(preference_df):
+        raise ValueError(
+            "Blind entity registry must have the same number of rows as preference_df"
+        )
+
+    merged = preference_df.copy()
+    merged["entity_id"] = entities["entity_id"].to_numpy()
     logger.debug(
-        "Attached entity_id to %d / %d preference rows",
+        "Attached entity_id to %d preference rows via positional blind mapping",
         len(merged),
-        len(preference_df),
     )
     return merged

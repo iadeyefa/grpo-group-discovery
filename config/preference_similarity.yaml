@@ -8,7 +8,7 @@ dataset:
   source_groups: null
 
 entities:
-  mode: observed
+  mode: blind
   n_simulated_per_group: 10
   random_state: 42
 
@@ -29,5 +29,5 @@ stability:
 
 export:
   output_dir: outputs
-  run_name: null
+  run_name: baseline_preference_similarity
   dataset_prefix: goqa_cluster

@@ -17,7 +17,7 @@ from src.clustering.dispatch import (
     run_discovery,
 )
 from src.clustering.stability import bootstrap_stability
-from src.data.entities import build_entity_table
+from src.data.entities import ENTITY_MODE_BLIND, build_entity_table
 from src.data.load_goqa import load_goqa_preferences
 from src.export.artifacts import export_all
 from src.utils import get_cache_dir, load_config, resolve_output_dir, setup_logging
@@ -68,6 +68,10 @@ def main() -> int:
         return 1
 
     logger.info("Stage 2/4: registering entities from preference data")
+    if entity_cfg.get("mode", "observed") == ENTITY_MODE_BLIND and method != BASELINE_METHOD:
+        raise ValueError(
+            "Blind entity mode is currently supported only for the preference_similarity baseline"
+        )
     entity_registry = build_entity_table(
         preference_df,
         mode=entity_cfg.get("mode", "observed"),
@@ -105,13 +109,16 @@ def main() -> int:
         )
 
     logger.info("Stage 4/4: exporting artifacts")
-    output_dir = resolve_output_dir(config)
+    if not export_cfg.get("run_name"):
+        export_cfg["run_name"] = method
+
+    output_dir = resolve_output_dir(config, overwrite=True)
     paths = export_all(
         assignments=assignments,
         entity_registry=entity_registry,
+        preference_df=preference_df,
         metadata=metadata,
         output_dir=output_dir,
-        dataset_prefix=export_cfg.get("dataset_prefix", "goqa_cluster"),
     )
 
     logger.info("Done. Artifacts written to %s", output_dir)
