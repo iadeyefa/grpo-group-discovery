@@ -1,6 +1,6 @@
 # grpo-group-discovery
 
-Discover preference groups for GRPO training — runs **before** [grpo-reproduction](https://github.com/).
+Discover preference groups for GRPO training — runs **before** [grpo-reproduction](https://github.com/iadeyefa/grpo-reproduction).
 
 ## Setup
 

@@ -14,6 +14,10 @@ clustering:
   method: matrix_factorization
   n_clusters: 5
   random_state: 42
+  n_components: 10
+  factorization_method: "nmf"
+  subsample_fraction: 0.3
+  sample_choices: true
 
 export:
   output_dir: outputs

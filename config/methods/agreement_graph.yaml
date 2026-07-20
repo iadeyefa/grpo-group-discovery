@@ -1,4 +1,4 @@
-# Method 5: Agreement graph on overlapping prompts — not yet implemented.
+# Method 5: Agreement graph on overlapping prompts.
 
 dataset:
   name: Anthropic/llm_global_opinions
@@ -14,6 +14,8 @@ clustering:
   method: agreement_graph
   n_clusters: 5
   random_state: 42
+  top_choice_weight: 0.5
+  min_shared_prompts: 2
 
 export:
   output_dir: outputs

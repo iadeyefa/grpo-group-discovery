@@ -17,7 +17,7 @@ from src.clustering.dispatch import (
     run_discovery,
 )
 from src.clustering.stability import bootstrap_stability
-from src.data.entities import ENTITY_MODE_BLIND, build_entity_table
+from src.data.entities import ENTITY_MODE_BLIND, attach_entity_ids, build_entity_table
 from src.data.load_goqa import load_goqa_preferences
 from src.export.artifacts import export_all
 from src.utils import get_cache_dir, load_config, resolve_output_dir, setup_logging
@@ -78,6 +78,7 @@ def main() -> int:
         n_simulated_per_group=entity_cfg.get("n_simulated_per_group", 10),
         random_state=entity_cfg.get("random_state", cluster_cfg.get("random_state", 42)),
     )
+    preference_with_entities = attach_entity_ids(preference_df, entity_registry)
 
     logger.info("Stage 3/4: running discovery (%s)", method)
     assignments, extras = run_discovery(
@@ -115,8 +116,7 @@ def main() -> int:
     output_dir = resolve_output_dir(config, overwrite=True)
     paths = export_all(
         assignments=assignments,
-        entity_registry=entity_registry,
-        preference_df=preference_df,
+        preference_with_entities=preference_with_entities,
         metadata=metadata,
         output_dir=output_dir,
     )

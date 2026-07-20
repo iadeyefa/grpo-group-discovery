@@ -23,17 +23,12 @@ def export_assignments(assignments: pd.DataFrame, output_dir: Path) -> Path:
 
 def export_cluster_records(
     assignments: pd.DataFrame,
-    entity_registry: pd.DataFrame,
-    preference_df: pd.DataFrame,
+    preference_with_entities: pd.DataFrame,
     output_dir: Path,
 ) -> Path:
     """Write per-cluster preference records with question text and distributions."""
     merged = assignments.merge(
-        entity_registry[["entity_id"]].merge(
-            preference_df[["question", "options", "prob_y"]].reset_index(drop=True),
-            left_index=True,
-            right_index=True,
-        ),
+        preference_with_entities[["entity_id", "question", "options", "prob_y"]],
         on="entity_id",
         how="left",
     )
@@ -85,15 +80,14 @@ def plot_cluster_sizes(assignments: pd.DataFrame, output_dir: Path) -> Path:
 
 def export_all(
     assignments: pd.DataFrame,
-    entity_registry: pd.DataFrame,
-    preference_df: pd.DataFrame,
+    preference_with_entities: pd.DataFrame,
     metadata: dict[str, Any],
     output_dir: Path,
 ) -> dict[str, Path]:
     """Write all standard artifacts for a clustering run."""
     paths = {
         "assignments": export_assignments(assignments, output_dir),
-        "cluster_records": export_cluster_records(assignments, entity_registry, preference_df, output_dir),
+        "cluster_records": export_cluster_records(assignments, preference_with_entities, output_dir),
         "metadata": export_metadata(metadata, output_dir),
         "plot": plot_cluster_sizes(assignments, output_dir),
     }
