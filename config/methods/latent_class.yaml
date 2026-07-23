@@ -13,6 +13,9 @@ entities:
 clustering:
   method: latent_class
   n_clusters: 5
+  max_iter: 100
+  tol: 0.0001
+  smoothing: 0.001
   random_state: 42
 
 export:

@@ -27,10 +27,10 @@ Simplest preference-aware discovery. Methods 1–5 should beat this.
 
 | # | Method | Config | Module | Status |
 | --- | -------- | ------ | ------ | ------ |
-| 1 | Cross-predictive similarity | `config/methods/cross_predictive.yaml` | `methods/cross_predictive.py` | Stub |
-| 2 | Chosen-rejected embedding sets | `config/methods/embedding_sets.yaml` | `methods/embedding_sets.py` | Stub |
+| 1 | Cross-predictive similarity | `config/methods/cross_predictive.yaml` | `methods/cross_predictive.py` | Implemented |
+| 2 | Chosen-rejected embedding sets | `config/methods/embedding_sets.yaml` | `methods/embedding_sets.py` | Implemented |
 | 3 | Sparse matrix factorization | `config/methods/matrix_factorization.yaml` | `methods/matrix_factorization.py` | Implemented |
-| 4 | Latent class preference model | `config/methods/latent_class.yaml` | `methods/latent_class.py` | Stub |
+| 4 | Latent class preference model | `config/methods/latent_class.yaml` | `methods/latent_class.py` | Implemented |
 | 5 | Agreement graph | `config/methods/agreement_graph.yaml` | `methods/agreement_graph.py` | Implemented |
 
 Run a method once implemented:

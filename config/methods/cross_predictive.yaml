@@ -14,6 +14,8 @@ entities:
 clustering:
   method: cross_predictive
   n_clusters: 5
+  min_shared_prompts: 2
+  similarity_metric: cosine
   random_state: 42
 
 export:

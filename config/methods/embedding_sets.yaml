@@ -13,6 +13,8 @@ entities:
 clustering:
   method: embedding_sets
   n_clusters: 5
+  distance_metric: chamfer
+  linkage: average
   random_state: 42
 
 export:
