@@ -13,12 +13,29 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 
-def export_assignments(assignments: pd.DataFrame, output_dir: Path) -> Path:
-    """Write entity → cluster_id mapping (clustering output only)."""
-    path = output_dir / "cluster_assignments.parquet"
-    assignments[["entity_id", "cluster_id"]].to_parquet(path, index=False)
-    logger.info("Wrote %s (%d rows)", path, len(assignments))
-    return path
+def export_assignments(
+    assignments: pd.DataFrame,
+    preference_with_entities: pd.DataFrame,
+    output_dir: Path,
+) -> dict[str, Path]:
+    """Write entity -> cluster_id mapping in Parquet and CSV formats."""
+    # Merge source_group if present
+    cols = ["entity_id", "cluster_id"]
+    if "source_group" in preference_with_entities.columns:
+        entity_sg = preference_with_entities[["entity_id", "source_group"]].drop_duplicates()
+        merged_assignments = assignments.merge(entity_sg, on="entity_id", how="left")
+        cols.append("source_group")
+    else:
+        merged_assignments = assignments.copy()
+
+    parquet_path = output_dir / "cluster_assignments.parquet"
+    merged_assignments[["entity_id", "cluster_id"]].to_parquet(parquet_path, index=False)
+
+    csv_path = output_dir / "cluster_assignments.csv"
+    merged_assignments[cols].to_csv(csv_path, index=False)
+
+    logger.info("Wrote %s and %s (%d rows)", parquet_path.name, csv_path.name, len(assignments))
+    return {"parquet": parquet_path, "csv": csv_path}
 
 
 def export_cluster_records(
@@ -53,6 +70,63 @@ def export_cluster_records(
     return path
 
 
+def export_cluster_summary(
+    assignments: pd.DataFrame,
+    preference_with_entities: pd.DataFrame,
+    output_dir: Path,
+) -> dict[str, Path]:
+    """Write human-readable CSV and Markdown summary of cluster sizes and composition."""
+    total_entities = len(assignments)
+
+    if "source_group" in preference_with_entities.columns:
+        entity_sg = preference_with_entities[["entity_id", "source_group"]].drop_duplicates()
+        merged = assignments.merge(entity_sg, on="entity_id", how="left")
+    else:
+        merged = assignments.copy()
+        merged["source_group"] = "unknown"
+
+    summary_rows = []
+    for cluster_id, group in merged.groupby("cluster_id"):
+        count = len(group)
+        pct = (count / total_entities) * 100.0
+
+        # Find top source groups
+        sg_counts = group["source_group"].value_counts()
+        top_sgs = [
+            f"{sg} ({cnt}, {cnt/count*100:.1f}%)"
+            for sg, cnt in sg_counts.head(5).items()
+        ]
+        top_sg_str = "; ".join(top_sgs)
+
+        summary_rows.append(
+            {
+                "cluster_id": int(cluster_id),
+                "entity_count": count,
+                "percentage": round(pct, 2),
+                "top_source_groups": top_sg_str,
+            }
+        )
+
+    summary_df = pd.DataFrame(summary_rows).sort_values("cluster_id")
+
+    csv_path = output_dir / "cluster_summary.csv"
+    summary_df.to_csv(csv_path, index=False)
+
+    md_path = output_dir / "cluster_summary.md"
+    with md_path.open("w") as f:
+        f.write("# Cluster Discovery Summary\n\n")
+        f.write(f"**Total Entities**: {total_entities}\n\n")
+        f.write("| Cluster ID | Entity Count | Percentage | Top Source Groups |\n")
+        f.write("| --- | --- | --- | --- |\n")
+        for row in summary_df.itertuples(index=False):
+            f.write(
+                f"| {row.cluster_id} | {row.entity_count} | {row.percentage:.1f}% | {row.top_source_groups} |\n"
+            )
+
+    logger.info("Wrote %s and %s", csv_path.name, md_path.name)
+    return {"csv": csv_path, "md": md_path}
+
+
 def export_metadata(metadata: dict[str, Any], output_dir: Path) -> Path:
     """Write run metadata JSON."""
     path = output_dir / "metadata.json"
@@ -85,9 +159,15 @@ def export_all(
     output_dir: Path,
 ) -> dict[str, Path]:
     """Write all standard artifacts for a clustering run."""
+    assignment_paths = export_assignments(assignments, preference_with_entities, output_dir)
+    summary_paths = export_cluster_summary(assignments, preference_with_entities, output_dir)
+
     paths = {
-        "assignments": export_assignments(assignments, output_dir),
+        "assignments": assignment_paths["parquet"],
+        "assignments_csv": assignment_paths["csv"],
         "cluster_records": export_cluster_records(assignments, preference_with_entities, output_dir),
+        "cluster_summary_csv": summary_paths["csv"],
+        "cluster_summary_md": summary_paths["md"],
         "metadata": export_metadata(metadata, output_dir),
         "plot": plot_cluster_sizes(assignments, output_dir),
     }
