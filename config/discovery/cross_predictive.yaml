@@ -1,0 +1,43 @@
+# ==============================================================================
+# DISCOVERY METHOD 1: Cross-Predictive Similarity Clustering (Fain)
+# ==============================================================================
+# HOW THIS METHOD WORKS:
+# 1. This method measures preference similarity between two people (A and B) by asking:
+#    "How much does knowing Person B's choices help us predict Person A's choices?"
+# 2. Specifically, for every pair of individuals (A, B):
+#    a. We evaluate how accurately we can predict Person A's choices without any context.
+#    b. We evaluate how accurately we can predict Person A's choices when conditioning on
+#       examples of Person B's choices (using log-probability margin or choice transfer gain).
+#    c. Transfer gain: gain(A <- B) = Acc(A | B) - Acc(A).
+#    d. We repeat in reverse to get gain(B <- A).
+#    e. Symmetric similarity: sim(A, B) = 0.5 * gain(A <- B) + 0.5 * gain(B <- A),
+#       weighted by prompt coverage on shared questions.
+# 3. This builds an N x N similarity (affinity) matrix across all individuals.
+# 4. We then run Spectral Clustering on this similarity matrix to extract K preference groups.
+#
+# ADVANTAGES:
+# - Directly targets preference transfer structure using conditioning margins rather than
+#   superficial text similarity.
+# ==============================================================================
+
+dataset:
+  name: Anthropic/llm_global_opinions
+  cache_dir: null
+  source_groups: null
+
+entities:
+  mode: observed
+  n_simulated_per_group: 10
+  random_state: 42
+
+clustering:
+  method: cross_predictive
+  n_clusters: 5
+  random_state: 42
+  similarity_metric: cosine
+  min_shared_prompts: 2
+
+export:
+  output_dir: outputs
+  run_name: cross_predictive
+  dataset_prefix: goqa_cluster

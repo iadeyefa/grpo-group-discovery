@@ -8,11 +8,9 @@ from typing import Any, Callable
 import pandas as pd
 
 from src.clustering.methods import (
-    agreement_graph,
     baselines,
     cross_predictive,
     embedding_sets,
-    latent_class,
     matrix_factorization,
     preference_similarity,
 )
@@ -28,12 +26,10 @@ DISCOVERY_METHODS: dict[str, Callable[..., tuple[pd.DataFrame, dict[str, Any]]]]
     baselines.SINGLE_GROUP_METHOD: baselines.run_single_group,
     baselines.RANDOM_ASSIGNMENT_METHOD: baselines.run_random_assignment,
     baselines.COUNTRY_ORACLE_METHOD: baselines.run_country_oracle,
-    # Discovery methods 1-5
+    # Discovery methods 1-3
     cross_predictive.METHOD_NAME: cross_predictive.run,
     embedding_sets.METHOD_NAME: embedding_sets.run,
     matrix_factorization.METHOD_NAME: matrix_factorization.run,
-    latent_class.METHOD_NAME: latent_class.run,
-    agreement_graph.METHOD_NAME: agreement_graph.run,
 }
 
 

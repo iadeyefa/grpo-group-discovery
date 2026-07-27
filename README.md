@@ -13,20 +13,16 @@ pip install -r requirements.txt
 ## Run
 
 ```bash
-# Baselines
-python3 discover.py --config config/methods/single_group.yaml
-python3 discover.py --config config/methods/random_assignment.yaml
-python3 discover.py --config config/methods/country_oracle.yaml
+# Reference Baselines
+python3 discover.py --config config/baselines/single_group.yaml
+python3 discover.py --config config/baselines/random_assignment.yaml
+python3 discover.py --config config/baselines/preference_similarity.yaml
+python3 discover.py --config config/baselines/country_oracle.yaml
 
-# Floor baseline
-python3 discover.py --config config/preference_similarity.yaml
-
-# Discovery methods 1–5
-python3 discover.py --config config/methods/embedding_sets.yaml
-python3 discover.py --config config/methods/cross_predictive.yaml
-python3 discover.py --config config/methods/matrix_factorization.yaml
-python3 discover.py --config config/methods/latent_class.yaml
-python3 discover.py --config config/methods/agreement_graph.yaml
+# Core Discovery Methods (Methods 1–3)
+python3 discover.py --config config/discovery/cross_predictive.yaml
+python3 discover.py --config config/discovery/embedding_sets.yaml
+python3 discover.py --config config/discovery/matrix_factorization.yaml
 ```
 
 Outputs: `outputs/<run_name>/` — see [docs/artifact-format.md](docs/artifact-format.md).
@@ -38,7 +34,7 @@ Preference records (GOQA / pairwise dataset)
         ↓
 Opaque entity_id registry
         ↓
-Discovery method (baselines → methods 1–5)
+Discovery method (baselines → discovery methods 1–3)
         ↓
 Evaluation (entropy, cohesion, separation, held-out prediction, demographic overlay)
         ↓
@@ -47,10 +43,10 @@ Export cluster assignments + polarizing questions report
 grpo-reproduction (GR-IPO per discovered group)
 ```
 
-## Config
+## Config Organization
 
-- `config/preference_similarity.yaml` — floor baseline
-- `config/methods/*.yaml` — baselines + discovery methods
+- `config/baselines/` — Control anchors (single_group, random_assignment, preference_similarity, country_oracle)
+- `config/discovery/` — Core discovery algorithms (cross_predictive, embedding_sets, matrix_factorization)
 
 ## Docs
 

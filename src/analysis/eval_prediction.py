@@ -22,27 +22,49 @@ def train_test_split_by_entity(
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Split preference records per entity into train/test partitions.
 
-    For each entity, reserves ``test_frac`` of their question responses as
-    held-out test data.  This ensures every entity appears in both splits.
+    If entities have multiple records, splits questions per entity.
+    If entities have a single record (e.g. blind mode), splits entities into train/test groups.
     """
+    if "entity_id" not in preference_df.columns or preference_df.empty:
+        return pd.DataFrame(), pd.DataFrame()
+
     rng = np.random.default_rng(random_state)
     train_rows = []
     test_rows = []
 
-    for entity_id, group in preference_df.groupby("entity_id"):
-        n = len(group)
-        n_test = max(1, int(n * test_frac))
-        indices = rng.permutation(n)
-        test_indices = set(indices[:n_test])
+    # Check if entities have multiple records
+    max_records = preference_df.groupby("entity_id").size().max()
 
-        for i, (_, row) in enumerate(group.iterrows()):
-            if i in test_indices:
+    if max_records > 1:
+        # Entity has multiple records: split per entity
+        for entity_id, group in preference_df.groupby("entity_id"):
+            n = len(group)
+            n_test = int(n * test_frac)
+            if n_test == 0 and n > 1:
+                n_test = 1
+            indices = rng.permutation(n)
+            test_indices = set(indices[:n_test])
+
+            for i, (_, row) in enumerate(group.iterrows()):
+                if i in test_indices:
+                    test_rows.append(row)
+                else:
+                    train_rows.append(row)
+    else:
+        # Single record per entity (e.g. blind mode): split entities 80/20
+        entities = preference_df["entity_id"].unique()
+        n_entities = len(entities)
+        n_test = max(1, int(n_entities * test_frac))
+        test_entities = set(rng.choice(entities, size=n_test, replace=False))
+
+        for _, row in preference_df.iterrows():
+            if row["entity_id"] in test_entities:
                 test_rows.append(row)
             else:
                 train_rows.append(row)
 
-    train_df = pd.DataFrame(train_rows).reset_index(drop=True)
-    test_df = pd.DataFrame(test_rows).reset_index(drop=True)
+    train_df = pd.DataFrame(train_rows).reset_index(drop=True) if train_rows else pd.DataFrame()
+    test_df = pd.DataFrame(test_rows).reset_index(drop=True) if test_rows else pd.DataFrame()
 
     logger.info(
         "Train/test split: %d train rows, %d test rows (%.1f%% held out)",
@@ -58,6 +80,9 @@ def _build_cluster_centroids(
     assignments: pd.DataFrame,
 ) -> dict[int, np.ndarray]:
     """Build mean preference vector per cluster from training data."""
+    if train_df.empty or "entity_id" not in train_df.columns:
+        return {}
+
     merged = train_df.merge(assignments, on="entity_id", how="inner")
 
     if "prob_y" not in merged.columns:

@@ -32,7 +32,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--config",
         type=Path,
-        default=Path("config/preference_similarity.yaml"),
+        default=Path("config/baselines/preference_similarity.yaml"),
         help="Path to YAML config",
     )
     parser.add_argument(

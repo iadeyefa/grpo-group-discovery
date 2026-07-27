@@ -1,0 +1,41 @@
+# ==============================================================================
+# DISCOVERY METHOD 3: Sparse Matrix Factorization + Latent Clustering
+# ==============================================================================
+# HOW THIS METHOD WORKS:
+# 1. We construct a large, sparse preference matrix where:
+#    - Rows = Individuals (entities)
+#    - Columns = Question options (or prompt x option pairs)
+#    - Cell values = Preference signal (chosen option probability or binary choice)
+# 2. Since different individuals see different prompts, most cells in this matrix are missing (sparse).
+# 3. We factorize this sparse matrix using Non-Negative Matrix Factorization (NMF),
+#    Truncated Singular Value Decomposition (SVD), or Alternating Least Squares (ALS):
+#       Sparse Matrix X (N x M) ~ User Latent Matrix W (N x D) * Feature Matrix H (D x M)
+# 4. The learned rows of W represent low-dimensional "latent preference embeddings" for each person,
+#    filling in unobserved preferences via collaborative filtering logic.
+# 5. Finally, we run KMeans clustering on the latent user vectors W to discover K preference groups.
+#
+# ADVANTAGES:
+# - Highly scalable collaborative filtering baseline designed specifically to handle missing / non-overlapping prompts.
+# ==============================================================================
+
+dataset:
+  name: Anthropic/llm_global_opinions
+  cache_dir: null
+  source_groups: null
+
+entities:
+  mode: observed
+  n_simulated_per_group: 10
+  random_state: 42
+
+clustering:
+  method: matrix_factorization
+  n_clusters: 5
+  random_state: 42
+  n_components: 10
+  factorization_method: nmf
+
+export:
+  output_dir: outputs
+  run_name: matrix_factorization
+  dataset_prefix: goqa_cluster

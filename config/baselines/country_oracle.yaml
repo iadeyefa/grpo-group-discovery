@@ -1,0 +1,32 @@
+# ==============================================================================
+# BASELINE 4: Country Oracle (Hidden Demographic Baseline)
+# ==============================================================================
+# HOW THIS METHOD WORKS:
+# 1. This baseline looks up the hidden demographic tag (`source_group` / country label)
+#    attached to each entity and directly uses that as the cluster assignment.
+# 2. For example, all entities from "Nigeria" go to Cluster 0, all from "Egypt" go to Cluster 1, etc.
+# 3. Note: Ground-truth demographic tags are NEVER accessible to real discovery algorithms;
+#    this method acts purely as a demographic reference.
+#
+# WHY WE USE IT:
+# - This serves as an APPROXIMATE DEMOGRAPHIC UPPER BOUND.
+# - It allows us to ask the core research question: Do behaviorally discovered preference
+#   groups (which group people by actual choices regardless of country) outperform fixed,
+#   pre-defined demographic groupings on downstream GRPO performance and preference prediction?
+# ==============================================================================
+
+run_name: baseline_country_oracle
+
+dataset:
+  name: Anthropic/llm_global_opinions
+
+entities:
+  mode: observed
+
+clustering:
+  method: country_oracle
+
+export:
+  output_dir: outputs
+  run_name: baseline_country_oracle
+  dataset_prefix: goqa_cluster

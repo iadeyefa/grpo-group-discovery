@@ -1,0 +1,31 @@
+# ==============================================================================
+# BASELINE 1: Single Group (No Discovery / Pooled Baseline)
+# ==============================================================================
+# HOW THIS METHOD WORKS:
+# 1. This baseline ignores all individual differences and assigns EVERY person to
+#    a single, unified cluster (Cluster 0).
+# 2. It represents standard single-group DPO/IPO training where all training data
+#    is pooled together without any group-specific policy optimization.
+#
+# WHY WE USE IT:
+# - This serves as our absolute LOWER BOUND.
+# - In downstream GRPO training, if our discovered groups do not achieve higher average
+#   and worst-group rewards than Single Group, then group discovery added no value.
+# ==============================================================================
+
+run_name: baseline_single_group
+
+dataset:
+  name: Anthropic/llm_global_opinions
+
+entities:
+  mode: observed
+
+clustering:
+  method: single_group
+  n_clusters: 1
+
+export:
+  output_dir: outputs
+  run_name: baseline_single_group
+  dataset_prefix: goqa_cluster

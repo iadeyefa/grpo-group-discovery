@@ -1,0 +1,33 @@
+# ==============================================================================
+# BASELINE 2: Random Assignment (Stochastic Baseline)
+# ==============================================================================
+# HOW THIS METHOD WORKS:
+# 1. This baseline ignores all preference data and randomly assigns each person
+#    to one of K groups using a uniform random distribution (seeded for reproducibility).
+# 2. It creates K roughly equal-sized groups, but the groupings contain no real
+#    signal or preference structure.
+#
+# WHY WE USE IT:
+# - This serves as our NOISE / CHANCE CONTROL.
+# - Any discovery method (Methods 1-3) MUST significantly beat Random Assignment on
+#   intra-cluster cohesion, preference separation, and held-out prediction lift to prove
+#   that it is discovering meaningful underlying structure rather than random artifacts.
+# ==============================================================================
+
+run_name: baseline_random_assignment
+
+dataset:
+  name: Anthropic/llm_global_opinions
+
+entities:
+  mode: observed
+
+clustering:
+  method: random_assignment
+  n_clusters: 5
+  random_state: 42
+
+export:
+  output_dir: outputs
+  run_name: baseline_random_assignment
+  dataset_prefix: goqa_cluster

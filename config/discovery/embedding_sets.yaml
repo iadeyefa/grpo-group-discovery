@@ -1,0 +1,45 @@
+# ==============================================================================
+# DISCOVERY METHOD 2: Chosen-Rejected Embedding Sets (Fain)
+# ==============================================================================
+# HOW THIS METHOD WORKS:
+# 1. For every preference example answered by a person, we construct a directional
+#    preference vector:
+#       delta_v = embed(prompt + chosen) - embed(prompt + rejected)
+#    This vector points from what the person disliked toward what they liked.
+# 2. Crucially, we DO NOT average a person's vectors into a single summary vector. Instead,
+#    each individual is represented as a MULTISET of difference vectors:
+#       Person A = { delta_v_1, delta_v_2, ..., delta_v_m }
+# 3. To compare Person A and Person B (who may have answered different numbers of prompts
+#    or completely different questions), we compute the Symmetric Chamfer Distance /
+#    Nearest-Neighbor Distance between their vector sets:
+#       d(A, B) = 0.5 * mean_{a in A} min_{b in B} ||a - b||
+#               + 0.5 * mean_{b in B} min_{a in A} ||b - a||
+# 4. This produces an N x N pairwise distance matrix between all individuals.
+# 5. Finally, we run Agglomerative / K-Medoids Clustering on this distance matrix to group
+#    people with similar overall preference directions.
+#
+# ADVANTAGES:
+# - Handles non-overlapping prompts and variable response counts natively without forcing
+#   everyone onto a fixed, padded vector space.
+# ==============================================================================
+
+dataset:
+  name: Anthropic/llm_global_opinions
+  cache_dir: null
+  source_groups: null
+
+entities:
+  mode: observed
+  n_simulated_per_group: 10
+  random_state: 42
+
+clustering:
+  method: embedding_sets
+  n_clusters: 5
+  random_state: 42
+  linkage: average
+
+export:
+  output_dir: outputs
+  run_name: embedding_sets
+  dataset_prefix: goqa_cluster
