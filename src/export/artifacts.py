@@ -10,6 +10,8 @@ from typing import Any
 import matplotlib.pyplot as plt
 import pandas as pd
 
+from src.analysis.evaluate import evaluate_discovery_run
+
 logger = logging.getLogger(__name__)
 
 
@@ -162,12 +164,31 @@ def export_all(
     assignment_paths = export_assignments(assignments, preference_with_entities, output_dir)
     summary_paths = export_cluster_summary(assignments, preference_with_entities, output_dir)
 
+    # Run intrinsic preference evaluations
+    eval_metrics = evaluate_discovery_run(
+        assignments=assignments,
+        preference_with_entities=preference_with_entities,
+        output_dir=output_dir,
+    )
+    # Include evaluation metrics inside metadata
+    metadata["evaluation_metrics"] = {
+        "entropy": eval_metrics["entropy"],
+        "cohesion": eval_metrics["cohesion"],
+        "separation": {
+            "mean_inter_cluster_jsd": eval_metrics["separation"]["mean_inter_cluster_jsd"],
+            "calinski_harabasz_score": eval_metrics["separation"]["calinski_harabasz_score"],
+            "davies_bouldin_score": eval_metrics["separation"]["davies_bouldin_score"],
+        },
+    }
+
     paths = {
         "assignments": assignment_paths["parquet"],
         "assignments_csv": assignment_paths["csv"],
         "cluster_records": export_cluster_records(assignments, preference_with_entities, output_dir),
         "cluster_summary_csv": summary_paths["csv"],
         "cluster_summary_md": summary_paths["md"],
+        "evaluation_metrics": output_dir / "evaluation_metrics.json",
+        "polarizing_questions": output_dir / "polarizing_questions.md",
         "metadata": export_metadata(metadata, output_dir),
         "plot": plot_cluster_sizes(assignments, output_dir),
     }

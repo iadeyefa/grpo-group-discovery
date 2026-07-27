@@ -102,6 +102,106 @@ def load_goqa_preferences(
     source_groups: list[str] | None = None,
     cache_dir: str | None = None,
 ) -> pd.DataFrame:
-    """End-to-end loader used by the discovery pipeline."""
+    """End-to-end loader used by the discovery pipeline (aggregate format)."""
     raw = load_raw_goqa(dataset_name=dataset_name, cache_dir=cache_dir)
     return build_preference_frame(raw, source_groups=source_groups)
+
+
+def build_pairwise_frame(
+    df: pd.DataFrame,
+    source_groups: list[str] | None = None,
+    n_simulated_per_group: int = 10,
+    n_samples_per_question: int = 3,
+    random_state: int = 42,
+) -> pd.DataFrame:
+    """
+    Convert GOQA aggregate distributions into simulated individual-level pairwise records.
+
+    For each source_group, creates ``n_simulated_per_group`` synthetic individuals.
+    Each individual samples ``n_samples_per_question`` (chosen, rejected) pairs per question
+    from that group's probability distribution.
+
+    Returns columns: entity_id, qkey, prompt, chosen, rejected, source_group, prob_chosen
+    """
+    available = _discover_source_groups(df)
+    if source_groups is None:
+        source_groups = available
+
+    rng = np.random.default_rng(random_state)
+    rows: list[dict[str, Any]] = []
+    entity_counter = 0
+
+    for sg in source_groups:
+        for sim_idx in range(n_simulated_per_group):
+            entity_id = f"entity_{entity_counter:04d}"
+            entity_counter += 1
+
+            for i in range(len(df)):
+                question = df.loc[i, "question"]
+                options_raw = df.loc[i, "options"]
+                if not question or not options_raw:
+                    continue
+
+                selections = _parse_selections(df.loc[i, "selections"])
+                if sg not in selections:
+                    continue
+
+                prob_y = selections[sg]
+                if prob_y is None or len(prob_y) == 0 or np.sum(prob_y) == 0:
+                    continue
+
+                options = [str(opt) for opt in ast.literal_eval(options_raw)]
+                probs = np.asarray(prob_y, dtype=np.float64)
+                probs = probs / probs.sum()
+                n_opts = len(probs)
+                if n_opts < 2:
+                    continue
+
+                options_str = " | ".join(options)
+                prompt = f"{question}\nOptions: {options_str}"
+
+                for _ in range(n_samples_per_question):
+                    chosen_idx = int(rng.choice(n_opts, p=probs))
+                    remaining = [j for j in range(n_opts) if j != chosen_idx]
+                    rejected_idx = int(rng.choice(remaining))
+
+                    rows.append(
+                        {
+                            "entity_id": entity_id,
+                            "qkey": df.loc[i, "qkey"],
+                            "prompt": prompt,
+                            "chosen": options[chosen_idx],
+                            "rejected": options[rejected_idx],
+                            "source_group": sg,
+                            "prob_chosen": float(probs[chosen_idx]),
+                        }
+                    )
+
+    out = pd.DataFrame(rows)
+    logger.info(
+        "Built pairwise frame: %d records, %d entities, %d source groups",
+        len(out),
+        out["entity_id"].nunique() if len(out) else 0,
+        out["source_group"].nunique() if len(out) else 0,
+    )
+    return out
+
+
+def load_goqa_pairwise(
+    dataset_name: str = "Anthropic/llm_global_opinions",
+    source_groups: list[str] | None = None,
+    n_simulated_per_group: int = 10,
+    n_samples_per_question: int = 3,
+    random_state: int = 42,
+    cache_dir: str | None = None,
+) -> pd.DataFrame:
+    """End-to-end loader for GOQA in pairwise format (simulated individuals)."""
+    raw = load_raw_goqa(dataset_name=dataset_name, cache_dir=cache_dir)
+    return build_pairwise_frame(
+        raw,
+        source_groups=source_groups,
+        n_simulated_per_group=n_simulated_per_group,
+        n_samples_per_question=n_samples_per_question,
+        random_state=random_state,
+    )
+

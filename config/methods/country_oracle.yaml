@@ -1,0 +1,15 @@
+# Country oracle baseline — uses hidden source_group labels (approximate upper bound)
+run_name: baseline_country_oracle
+
+dataset:
+  name: Anthropic/llm_global_opinions
+
+entities:
+  mode: observed
+
+clustering:
+  method: country_oracle
+
+export:
+  run_name: baseline_country_oracle
+  dataset_prefix: goqa_cluster

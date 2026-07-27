@@ -1,0 +1,16 @@
+# Single-group baseline — all entities in one cluster
+run_name: baseline_single_group
+
+dataset:
+  name: Anthropic/llm_global_opinions
+
+entities:
+  mode: observed
+
+clustering:
+  method: single_group
+  n_clusters: 1
+
+export:
+  run_name: baseline_single_group
+  dataset_prefix: goqa_cluster

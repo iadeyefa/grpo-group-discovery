@@ -27,5 +27,14 @@ outputs/
 .idea/
 .vscode/
 
+# Large data files
+*.csv
+*.parquet
+WVS_*.csv
+
 # Project artifacts
 Pre-GRPO Discovery Options.docx
+
+# Agent config
+.agents/
+

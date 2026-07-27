@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 ENTITY_MODE_OBSERVED = "observed"
 ENTITY_MODE_SIMULATED = "simulated"
 ENTITY_MODE_BLIND = "blind"
+ENTITY_MODE_INDIVIDUAL = "individual"
 
 
 def build_entity_table(
@@ -40,9 +41,12 @@ def build_entity_table(
         )
     if mode == ENTITY_MODE_BLIND:
         return _build_blind_entities(preference_df)
+    if mode == ENTITY_MODE_INDIVIDUAL:
+        return _build_individual_entities(preference_df)
     raise ValueError(
         f"Unsupported entity mode: {mode!r}. "
-        f"Expected {ENTITY_MODE_OBSERVED!r}, {ENTITY_MODE_SIMULATED!r}, or {ENTITY_MODE_BLIND!r}."
+        f"Expected one of: {ENTITY_MODE_OBSERVED!r}, {ENTITY_MODE_SIMULATED!r}, "
+        f"{ENTITY_MODE_BLIND!r}, {ENTITY_MODE_INDIVIDUAL!r}."
     )
 
 
@@ -108,6 +112,30 @@ def _build_blind_entities(preference_df: pd.DataFrame) -> pd.DataFrame:
     )
     logger.info("Registered %d blind entities from preference rows", len(entities))
     logger.debug("Blind entity registry: %s", entities.to_dict("records"))
+    return entities
+
+
+def _build_individual_entities(preference_df: pd.DataFrame) -> pd.DataFrame:
+    """Use pre-existing entity_id column from pairwise preference data.
+
+    For datasets where each row already has an individual_id / entity_id,
+    this mode simply extracts the unique entity list and optional source_group.
+    """
+    if "entity_id" not in preference_df.columns:
+        raise ValueError(
+            "Individual entity mode requires 'entity_id' column in preference_df. "
+            "Use load_pairwise loaders or set entities.mode to 'observed' or 'blind'."
+        )
+
+    cols = ["entity_id"]
+    if "source_group" in preference_df.columns:
+        cols.append("source_group")
+
+    entities = preference_df[cols].drop_duplicates().reset_index(drop=True)
+    logger.info(
+        "Registered %d individual entities from preference records",
+        len(entities),
+    )
     return entities
 
 

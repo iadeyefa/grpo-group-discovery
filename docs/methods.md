@@ -4,49 +4,43 @@ Pre-GRPO group discovery runs in this repo **before** grpo-reproduction. This re
 
 ## Comparison ladder
 
-| Tier | Method | Where | Uses preferences? |
-| ------ | -------- | ------- | ----------------- |
-| **No discovery** | Single-group IPO/DPO | grpo-reproduction | Yes (pooled) |
-| **Floor baseline** | `preference_similarity` | This repo | Yes |
-| **Methods 1–5** | See below | This repo | Yes |
-| **Post-hoc eval** | Hidden source_group alignment | `evaluation_source_groups.json` | N/A |
+| Tier | Method | Config | Purpose |
+| --- | --- | --- | --- |
+| **Lower bound** | `single_group` | `config/methods/single_group.yaml` | All entities pooled — no discovery |
+| **Stochastic** | `random_assignment` | `config/methods/random_assignment.yaml` | Random K-way split — noise baseline |
+| **Floor baseline** | `preference_similarity` | `config/preference_similarity.yaml` | KMeans on mean opinion vectors |
+| **Methods 1–5** | See below | `config/methods/*.yaml` | Real discovery methods |
+| **Oracle** | `country_oracle` | `config/methods/country_oracle.yaml` | Hidden source_group labels — approx upper bound |
 
-Single-group IPO/DPO skips this repo entirely.
+## Discovery methods
 
-## Floor baseline: `preference_similarity`
-
-Config: `config/preference_similarity.yaml`
-
-- Build mean opinion vector per entity from GOQA `prob_y`
-- L2-normalize
-- KMeans in similarity space
-
-Simplest preference-aware discovery. Methods 1–5 should beat this.
-
-## Methods 1–5 (implement on top of floor baseline)
-
-| # | Method | Config | Module | Status |
-| --- | -------- | ------ | ------ | ------ |
-| 1 | Cross-predictive similarity | `config/methods/cross_predictive.yaml` | `methods/cross_predictive.py` | Implemented |
-| 2 | Chosen-rejected embedding sets | `config/methods/embedding_sets.yaml` | `methods/embedding_sets.py` | Implemented |
-| 3 | Sparse matrix factorization | `config/methods/matrix_factorization.yaml` | `methods/matrix_factorization.py` | Implemented |
-| 4 | Latent class preference model | `config/methods/latent_class.yaml` | `methods/latent_class.py` | Implemented |
-| 5 | Agreement graph | `config/methods/agreement_graph.yaml` | `methods/agreement_graph.py` | Implemented |
-
-Run a method once implemented:
+| # | Method | Module | Algorithm |
+| --- | --- | --- | --- |
+| 1 | Cross-predictive similarity | `methods/cross_predictive.py` | Transfer gain on shared prompts → Spectral Clustering |
+| 2 | Chosen-rejected embedding sets | `methods/embedding_sets.py` | Chamfer distance on diff vectors → Agglomerative |
+| 3 | Sparse matrix factorization | `methods/matrix_factorization.py` | NMF/SVD on entity×option matrix → KMeans |
+| 4 | Latent class preference model | `methods/latent_class.py` | Mixture multinomial logit via EM |
+| 5 | Agreement graph | `methods/agreement_graph.py` | Pairwise agreement on overlapping prompts → Spectral |
 
 ```bash
-python3 discover.py --config config/methods/cross_predictive.yaml
+python3 discover.py --config config/methods/embedding_sets.yaml
 ```
 
-## GOQA data note
+## Entity modes
 
-Methods assume individual-level preference records. GOQA provides population-level aggregates.
-
-- **`entities.mode: observed`** — one entity per HF source group (pilot)
-- **`entities.mode: simulated`** — synthetic individuals per source group (for methods 1–2)
+| Mode | Description |
+| --- | --- |
+| `observed` | One entity per HF source group (pilot) |
+| `simulated` | Synthetic individuals sampled from group distributions |
+| `blind` | One anonymous entity per preference row |
+| `individual` | Pre-existing entity_id from pairwise datasets |
 
 ## Evaluation
 
-- **Discovered groups:** cohesion, stability, worst-group GRPO performance
-- **Hidden structure:** `evaluation_source_groups.json` — source_group counts per cluster (never used in clustering)
+- **Entropy Reduction (ΔH):** Reduction in choice uncertainty when conditioning on groups.
+- **Cohesion:** Mean intra-cluster cosine similarity.
+- **Separation:** Inter-cluster JSD, Calinski-Harabasz, Davies-Bouldin.
+- **Held-out Prediction Lift:** Does cluster assignment predict unseen choices above a naive baseline?
+- **Demographic Overlay:** ARI/NMI against hidden source_group labels (low is not failure).
+- **Polarizing Prompt Audit:** Top questions with maximum inter-group divergence.
+- **Downstream:** Worst-group GRPO reward under group-specific policy optimization.

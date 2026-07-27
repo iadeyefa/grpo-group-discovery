@@ -9,6 +9,7 @@ import pandas as pd
 
 from src.clustering.methods import (
     agreement_graph,
+    baselines,
     cross_predictive,
     embedding_sets,
     latent_class,
@@ -21,7 +22,13 @@ logger = logging.getLogger(__name__)
 BASELINE_METHOD = preference_similarity.METHOD_NAME
 
 DISCOVERY_METHODS: dict[str, Callable[..., tuple[pd.DataFrame, dict[str, Any]]]] = {
+    # Floor baseline
     preference_similarity.METHOD_NAME: preference_similarity.run,
+    # Comparison baselines
+    baselines.SINGLE_GROUP_METHOD: baselines.run_single_group,
+    baselines.RANDOM_ASSIGNMENT_METHOD: baselines.run_random_assignment,
+    baselines.COUNTRY_ORACLE_METHOD: baselines.run_country_oracle,
+    # Discovery methods 1-5
     cross_predictive.METHOD_NAME: cross_predictive.run,
     embedding_sets.METHOD_NAME: embedding_sets.run,
     matrix_factorization.METHOD_NAME: matrix_factorization.run,

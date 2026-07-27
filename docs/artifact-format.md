@@ -6,19 +6,14 @@ Exports from `discover.py` are written to `outputs/<run_name>/`.
 
 | File | Description |
 |------|-------------|
-| `cluster_assignments.parquet` | `entity_id`, `cluster_id` — clustering output only |
-| `entity_registry.json` | `entity_id` → HF `source_group` (downstream + eval, not clustering) |
-| `metadata.json` | Run config, `discovery_method`, `discovery_tier`, cluster sizes |
-| `dataset_group_map.json` | `goqa_cluster_N` → HF source_group labels for grpo-reproduction |
-| `evaluation_source_groups.json` | Post-hoc source_group counts per cluster |
+| `cluster_assignments.parquet` | `entity_id`, `cluster_id` — primary clustering output |
+| `cluster_assignments.csv` | Same as above plus `source_group` if present |
+| `cluster_records.json` | Per-cluster preference records with questions and distributions |
+| `cluster_summary.md` | Human-readable summary of cluster sizes |
+| `evaluation_metrics.json` | All evaluation metrics (see schema below) |
+| `polarizing_questions.md` | Top questions with maximum inter-cluster preference divergence |
+| `metadata.json` | Run config, method, cluster sizes, evaluation summary |
 | `cluster_sizes.png` | Bar chart of entities per cluster |
-
-## Clustering contract
-
-1. **Load** preference records (opinion distributions per question per source group).
-2. **Register** opaque `entity_id` values from preference data.
-3. **Discover** groups via `preference_similarity` (floor baseline) or methods 1–5.
-4. **Evaluate** using `evaluation_source_groups.json` — hidden population structure never enters discovery.
 
 ## `cluster_assignments.parquet`
 
@@ -29,40 +24,42 @@ entity_0001  2
 entity_0002  1
 ```
 
-## `entity_registry.json`
+## `evaluation_metrics.json`
 
 ```json
 {
-  "entity_0000": "Nigeria",
-  "entity_0001": "Egypt"
-}
-```
-
-## `dataset_group_map.json`
-
-```json
-{
-  "goqa_cluster_0": ["Egypt", "Nigeria"],
-  "goqa_cluster_1": ["China", "Japan"]
-}
-```
-
-Values are HF source_group labels used by grpo-reproduction to filter training data.
-
-## `evaluation_source_groups.json`
-
-```json
-{
-  "0": {"Egypt": 1, "Nigeria": 1},
-  "1": {"China": 1, "Japan": 1}
+  "entropy": {
+    "pooled_entropy": 1.5669,
+    "weighted_cluster_entropy": 1.4120,
+    "entropy_reduction": 0.1549,
+    "relative_entropy_drop": 0.0989
+  },
+  "cohesion": {
+    "overall_cohesion": 0.8421,
+    "per_cluster_cohesion": {"0": 0.865, "1": 0.819}
+  },
+  "separation": {
+    "mean_inter_cluster_jsd": 0.4215,
+    "calinski_harabasz_score": 1254.32,
+    "davies_bouldin_score": 1.12
+  },
+  "prediction": {
+    "cluster_accuracy": 0.72,
+    "baseline_accuracy": 0.58,
+    "prediction_lift": 0.14
+  },
+  "demographic_overlay": {
+    "adjusted_rand_index": 0.23,
+    "normalized_mutual_info": 0.31
+  }
 }
 ```
 
 ## Integration with grpo-reproduction
 
-1. Copy `dataset_group_map.json` and `entity_registry.json` into the training repo.
-2. Filter `get_goqa` by source_group lists per `goqa_cluster_N`.
-3. Train with `datasets=[goqa_cluster_0, goqa_cluster_1, ...]`.
+1. Copy `cluster_assignments.parquet` into `grpo-reproduction`.
+2. Group training samples by `cluster_id`.
+3. Train with GR-IPO per discovered preference cluster.
 
 ## Versioning
 
