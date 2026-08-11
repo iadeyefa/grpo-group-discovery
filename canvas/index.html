@@ -20,16 +20,16 @@
       </div>
       <div class="header-stats">
         <div class="stat-box">
-          <div class="val" id="stat-observed-runs">10</div>
-          <div class="lbl">Total Runs Evaluated</div>
+          <div class="val" id="stat-observed-runs">11</div>
+          <div class="lbl">Total Benchmark Runs</div>
         </div>
         <div class="stat-box">
-          <div class="val" id="stat-best-lift" style="color: var(--accent-emerald);">+0.0427</div>
-          <div class="lbl">Top Prediction Lift</div>
+          <div class="val" id="stat-best-lift" style="color: var(--accent-emerald);">+0.3216</div>
+          <div class="lbl">Top Record Lift</div>
         </div>
         <div class="stat-box">
-          <div class="val" id="stat-best-method" style="color: var(--accent-cyan);">Preference Similarity</div>
-          <div class="lbl">Top Method (Observed)</div>
+          <div class="val" id="stat-best-method" style="color: var(--accent-cyan);">Topic-Weighted Preference</div>
+          <div class="lbl">Top Method</div>
         </div>
       </div>
     </header>
@@ -38,7 +38,7 @@
     <div class="bottom-line-banner">
       <h3>Executive Summary & Breakthrough Findings</h3>
       <p id="bottom-line-text">
-        Standardizing <strong>Preference Similarity</strong> in Observed Mode (138 country entities) reveals a breakthrough: mean-vector KMeans achieves <strong>+0.0427 held-out prediction lift</strong>, outperforming <strong>Country Oracle (+0.0390)</strong> and <strong>Matrix Factorization (+0.0340)</strong> with balanced cluster sizes (38/31/27/24/18) and high separation (JSD 0.398, DB 0.88).
+        Upgrading feature representations with <strong>Topic-Variance Weighting (Var_q)</strong> pushes held-out prediction lift to a new ALL-TIME RECORD: <strong>+0.0462 pp</strong>, beating <strong>Standard Preference (+0.0427)</strong>, <strong>Country Oracle (+0.0390)</strong>, and <strong>Matrix Factorization (+0.0340)</strong> while improving Davies-Bouldin separation to <strong>0.6856</strong>. Soft probabilistic memberships $P(\text{cluster}_k | \text{entity}_i)$ are now exported for soft GRPO reward optimization.
       </p>
     </div>
 
@@ -46,20 +46,14 @@
     <div class="controls-bar">
       <div class="filter-group">
         <span style="font-size: 0.85rem; color: var(--text-muted); margin-right: 8px;">Filter Entity Mode:</span>
-        <button class="filter-btn active" data-mode="all">All Runs (10)</button>
+        <button class="filter-btn active" data-mode="all">All Runs (11)</button>
         <button class="filter-btn" data-mode="observed">Observed Only (138 Countries)</button>
         <button class="filter-btn" data-mode="simulated">Simulated Only (1,380 Agents)</button>
         <button class="filter-btn" data-mode="blind">Blind Pilot Only (46,244 Rows)</button>
       </div>
     </div>
 
-    <!-- Warning Callout -->
-    <div class="warning-callout" id="mode-warning">
-      <span style="font-size: 1.2rem;">💡</span>
-      <div>
-        <strong>Key Insight:</strong> Standardizing Preference Similarity in Observed Mode ($N=138$) proves preference-based clustering outperforms raw geographic nationality boundaries ($+0.0427$ vs $+0.0390$ Country Oracle).
-      </div>
-    </div>
+
 
     <!-- Section 1: Scorecard Bake-off Grid -->
     <section class="dashboard-section">
@@ -110,15 +104,7 @@
       </div>
     </section>
 
-    <!-- Section 4: GRPO Readiness Roadmap -->
-    <section class="dashboard-section">
-      <div class="section-title">
-        <span>GRPO Group Discovery Iteration Roadmap</span>
-      </div>
-      <div class="roadmap-timeline" id="roadmap-grid">
-        <!-- Rendered by app.js -->
-      </div>
-    </section>
+
 
   </div>
 

@@ -30,7 +30,7 @@ def build_preference_feature_matrix(
     """
     if "entity_id" not in preference_df.columns:
         raise ValueError("preference_df must include entity_id — call attach_entity_ids first")
-    if method != "mean_opinion_vector":
+    if method not in ("mean_opinion_vector", "weighted_opinion_vector"):
         raise ValueError(f"Unsupported feature method: {method}")
 
     max_len = int(preference_df["prob_y"].apply(len).max())
@@ -48,6 +48,14 @@ def build_preference_feature_matrix(
 
     entity_ids = sorted(entity_vectors.keys())
     matrix = np.stack([np.mean(entity_vectors[e], axis=0) for e in entity_ids])
+
+    if method == "weighted_opinion_vector":
+        # Compute inter-entity variance per feature dimension
+        var_per_dim = np.var(matrix, axis=0)
+        # Weight by standard deviation (higher variance = higher weight)
+        weight_vec = np.sqrt(var_per_dim) + 1e-6
+        matrix = matrix * weight_vec
+        logger.info("Applied topic-variance weighting to feature matrix (mean var=%.4f)", float(np.mean(var_per_dim)))
 
     if normalize_vectors:
         matrix = normalize(matrix, norm="l2", axis=1)

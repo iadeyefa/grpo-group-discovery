@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 ENTITY_MODE_OBSERVED = "observed"
 ENTITY_MODE_SIMULATED = "simulated"
+ENTITY_MODE_DIRICHLET = "dirichlet"
 ENTITY_MODE_BLIND = "blind"
 ENTITY_MODE_INDIVIDUAL = "individual"
 
@@ -39,6 +40,12 @@ def build_entity_table(
             n_simulated_per_group=n_simulated_per_group,
             random_state=random_state,
         )
+    if mode == ENTITY_MODE_DIRICHLET:
+        return _build_simulated_entities(
+            preference_df,
+            n_simulated_per_group=n_simulated_per_group,
+            random_state=random_state,
+        )
     if mode == ENTITY_MODE_BLIND:
         return _build_blind_entities(preference_df)
     if mode == ENTITY_MODE_INDIVIDUAL:
@@ -46,7 +53,7 @@ def build_entity_table(
     raise ValueError(
         f"Unsupported entity mode: {mode!r}. "
         f"Expected one of: {ENTITY_MODE_OBSERVED!r}, {ENTITY_MODE_SIMULATED!r}, "
-        f"{ENTITY_MODE_BLIND!r}, {ENTITY_MODE_INDIVIDUAL!r}."
+        f"{ENTITY_MODE_DIRICHLET!r}, {ENTITY_MODE_BLIND!r}, {ENTITY_MODE_INDIVIDUAL!r}."
     )
 
 

@@ -174,12 +174,24 @@ def run(
     )
     labels = kmeans.fit_predict(W)
 
+    # Compute soft membership probabilities P(cluster_k | entity_i) via softmax over centroid distances
+    distances = kmeans.transform(W)  # N x K Euclidean distances to centroids
+    scaled_neg_dist = -1.0 * distances
+    # Numerically stable softmax
+    max_neg_dist = np.max(scaled_neg_dist, axis=1, keepdims=True)
+    exp_dist = np.exp(scaled_neg_dist - max_neg_dist)
+    soft_probs = exp_dist / np.sum(exp_dist, axis=1, keepdims=True)
+
     assignments = pd.DataFrame(
         {
             "entity_id": entity_ids,
             "cluster_id": labels.astype(int),
         }
     ).sort_values(["cluster_id", "entity_id"])
+
+    soft_cols = [f"prob_cluster_{c}" for c in range(n_clusters)]
+    soft_assignments = pd.DataFrame(soft_probs, index=entity_ids, columns=soft_cols)
+    soft_assignments.index.name = "entity_id"
 
     extras = {
         "features_df": features_df,

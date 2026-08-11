@@ -10,10 +10,13 @@ import pandas as pd
 from src.clustering.methods import (
     baselines,
     cross_predictive,
+    domain_clustering,
     embedding_sets,
+    gmm_mixture,
     matrix_factorization,
     preference_similarity,
 )
+from src.features import contrastive
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +33,10 @@ DISCOVERY_METHODS: dict[str, Callable[..., tuple[pd.DataFrame, dict[str, Any]]]]
     cross_predictive.METHOD_NAME: cross_predictive.run,
     embedding_sets.METHOD_NAME: embedding_sets.run,
     matrix_factorization.METHOD_NAME: matrix_factorization.run,
+    # Advanced discovery methods
+    domain_clustering.METHOD_NAME: domain_clustering.run,
+    contrastive.METHOD_NAME: contrastive.run,
+    gmm_mixture.METHOD_NAME: gmm_mixture.run,
 }
 
 

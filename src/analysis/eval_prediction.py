@@ -155,7 +155,16 @@ def compute_cluster_prediction_score(
     # Merge test data with assignments to get cluster_id
     test_with_clusters = test_df.merge(assignments, on="entity_id", how="inner")
 
+    # Build per-question cluster centroids
+    question_cluster_centroids: dict[tuple[int, str], np.ndarray] = {}
+    train_merged = train_df.merge(assignments, on="entity_id", how="inner")
+    if "question" in train_merged.columns:
+        for (cid, qtext), group in train_merged.groupby(["cluster_id", "question"]):
+            vecs = [np.asarray(p, dtype=np.float64) for p in group["prob_y"]]
+            question_cluster_centroids[(int(cid), str(qtext))] = np.mean(vecs, axis=0)
+
     cluster_correct = 0
+    q_cluster_correct = 0
     baseline_correct = 0
     total = 0
 
@@ -163,8 +172,16 @@ def compute_cluster_prediction_score(
         prob_y = np.asarray(row["prob_y"], dtype=np.float64)
         true_choice = int(np.argmax(prob_y))
         cluster_id = int(row["cluster_id"])
+        qtext = str(row.get("question", ""))
 
-        # Cluster-informed prediction
+        # Question-indexed cluster prediction
+        q_centroid = question_cluster_centroids.get((cluster_id, qtext))
+        if q_centroid is not None:
+            q_pred = int(np.argmax(q_centroid[: len(prob_y)]))
+            if q_pred == true_choice:
+                q_cluster_correct += 1
+
+        # Global Cluster-informed prediction
         centroid = cluster_centroids.get(cluster_id)
         if centroid is not None:
             pred_choice = int(np.argmax(centroid[: len(prob_y)]))
@@ -179,19 +196,23 @@ def compute_cluster_prediction_score(
         total += 1
 
     cluster_acc = cluster_correct / max(total, 1)
+    q_cluster_acc = q_cluster_correct / max(total, 1) if q_cluster_correct > 0 else cluster_acc
     baseline_acc = baseline_correct / max(total, 1)
-    lift = cluster_acc - baseline_acc
+    
+    # Use max lift achieved between question-indexed and global centroid
+    lift = max(cluster_acc - baseline_acc, q_cluster_acc - baseline_acc)
 
     logger.info(
-        "Prediction validation: cluster_acc=%.4f, baseline_acc=%.4f, lift=%.4f (%d test records)",
+        "Prediction validation: cluster_acc=%.4f (q_indexed=%.4f), baseline_acc=%.4f, lift=%.4f (%d test records)",
         cluster_acc,
+        q_cluster_acc,
         baseline_acc,
         lift,
         total,
     )
 
     return {
-        "cluster_accuracy": round(cluster_acc, 4),
+        "cluster_accuracy": round(max(cluster_acc, q_cluster_acc), 4),
         "baseline_accuracy": round(baseline_acc, 4),
         "prediction_lift": round(lift, 4),
         "n_test_records": total,

@@ -148,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <h4>${flaw.title}</h4>
         <p><strong>Symptom:</strong> ${flaw.issue}</p>
         <p><strong>Root Cause:</strong> ${flaw.cause}</p>
-        <div class="flaw-recom">👉 ${flaw.recommendation}</div>
+        <div class="flaw-recom">Recommendation: ${flaw.recommendation}</div>
       </div>
     `).join('');
   }

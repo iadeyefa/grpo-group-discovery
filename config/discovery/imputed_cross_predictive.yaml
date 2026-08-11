@@ -1,0 +1,25 @@
+# ==============================================================================
+# DISCOVERY METHOD 1 (Imputed): Two-Stage Imputed Cross-Predictive Graph Discovery
+# ==============================================================================
+dataset:
+  name: Anthropic/llm_global_opinions
+  cache_dir: null
+  source_groups: null
+
+entities:
+  mode: observed
+  n_simulated_per_group: 10
+  random_state: 42
+
+clustering:
+  method: cross_predictive
+  n_clusters: 5
+  random_state: 42
+  min_shared_prompts: 2
+  similarity_metric: cosine
+  impute_first: true
+
+export:
+  output_dir: outputs
+  run_name: discovery_imputed_cross_predictive
+  dataset_prefix: goqa_cluster

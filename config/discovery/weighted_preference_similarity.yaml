@@ -1,0 +1,29 @@
+# ==============================================================================
+# DISCOVERY METHOD: Topic-Weighted Preference Similarity
+# ==============================================================================
+run_name: discovery_weighted_preference_similarity
+
+dataset:
+  name: Anthropic/llm_global_opinions
+  cache_dir: null
+  source_groups: null
+
+entities:
+  mode: observed
+  n_simulated_per_group: 10
+  random_state: 42
+
+features:
+  method: weighted_opinion_vector
+  normalize: true
+
+clustering:
+  method: preference_similarity
+  n_clusters: 5
+  random_state: 42
+  n_init: 10
+
+export:
+  output_dir: outputs
+  run_name: discovery_weighted_preference_similarity
+  dataset_prefix: goqa_cluster

@@ -41,22 +41,74 @@ def run(
     random_state = int(cluster_cfg.get("random_state", 42))
     min_shared_prompts = int(cluster_cfg.get("min_shared_prompts", 2))
     metric = str(cluster_cfg.get("similarity_metric", "cosine")).lower()
+    impute_first = bool(cluster_cfg.get("impute_first", False))
 
     sim_func = _top_choice_sim if metric == "top_choice" else _cosine_sim
 
-    logger.info("Attaching entity IDs for %s discovery", METHOD_NAME)
+    logger.info("Attaching entity IDs for %s discovery (impute_first=%s)", METHOD_NAME, impute_first)
     preference_with_entities = attach_entity_ids(preference_df, entity_registry)
 
-    # Build map per entity: entity_id -> {qkey: prob_y_array}
-    entity_prompt_map: dict[str, dict[str, np.ndarray]] = {}
-    for entity_id, group in preference_with_entities.groupby("entity_id"):
-        prompts: dict[str, np.ndarray] = {}
-        for row in group.itertuples(index=False):
-            arr = np.asarray(row.prob_y, dtype=np.float64)
-            p_sum = float(np.sum(arr))
-            if p_sum > 0:
-                prompts[row.qkey] = arr / p_sum
-        entity_prompt_map[entity_id] = prompts
+    if impute_first:
+        from sklearn.decomposition import NMF
+        # Stage 1: Build sparse matrix (entities x question_options) and run NMF matrix completion
+        all_qkeys = sorted(preference_with_entities["qkey"].unique())
+        qkey_to_opts = preference_with_entities.groupby("qkey")["options"].first().to_dict()
+        
+        # Map (qkey, opt_idx) -> col_idx
+        col_mapping = {}
+        col_idx = 0
+        for qk in all_qkeys:
+            opts = qkey_to_opts[qk]
+            for opt_i in range(len(opts)):
+                col_mapping[(qk, opt_i)] = col_idx
+                col_idx += 1
+                
+        entity_ids = sorted(preference_with_entities["entity_id"].unique())
+        eid_to_row = {eid: idx for idx, eid in enumerate(entity_ids)}
+        
+        sparse_mat = np.zeros((len(entity_ids), col_idx), dtype=np.float64)
+        mask_mat = np.zeros((len(entity_ids), col_idx), dtype=bool)
+        
+        for row in preference_with_entities.itertuples(index=False):
+            r_i = eid_to_row[row.entity_id]
+            qk = row.qkey
+            prob_y = row.prob_y
+            for opt_i, p_val in enumerate(prob_y):
+                c_i = col_mapping.get((qk, opt_i))
+                if c_i is not None:
+                    sparse_mat[r_i, c_i] = p_val
+                    mask_mat[r_i, c_i] = True
+                    
+        # Fit NMF on non-zero matrix to impute missing cells
+        nmf_model = NMF(n_components=min(10, len(entity_ids)), random_state=random_state, max_iter=200)
+        W = nmf_model.fit_transform(sparse_mat)
+        H = nmf_model.components_
+        imputed_mat = np.dot(W, H)
+        
+        # Build imputed entity_prompt_map
+        entity_prompt_map: dict[str, dict[str, np.ndarray]] = {}
+        for r_i, eid in enumerate(entity_ids):
+            prompts: dict[str, np.ndarray] = {}
+            for qk in all_qkeys:
+                opts = qkey_to_opts[qk]
+                c_indices = [col_mapping[(qk, opt_i)] for opt_i in range(len(opts))]
+                arr = imputed_mat[r_i, c_indices]
+                arr = np.maximum(arr, 0.0)
+                s = float(np.sum(arr))
+                prompts[qk] = arr / s if s > 0 else np.ones(len(opts)) / len(opts)
+            entity_prompt_map[eid] = prompts
+        logger.info("Stage 1 NMF Matrix Completion finished for %d entities x %d features", len(entity_ids), col_idx)
+    else:
+        # Build map per entity: entity_id -> {qkey: prob_y_array}
+        entity_prompt_map: dict[str, dict[str, np.ndarray]] = {}
+        for entity_id, group in preference_with_entities.groupby("entity_id"):
+            prompts: dict[str, np.ndarray] = {}
+            for row in group.itertuples(index=False):
+                arr = np.asarray(row.prob_y, dtype=np.float64)
+                p_sum = float(np.sum(arr))
+                if p_sum > 0:
+                    prompts[row.qkey] = arr / p_sum
+            entity_prompt_map[entity_id] = prompts
 
     entity_ids = sorted(entity_prompt_map.keys())
     n_entities = len(entity_ids)
@@ -104,7 +156,7 @@ def run(
             shared_keys = sorted(set(prompts_a).intersection(prompts_b))
             shared_count = len(shared_keys)
 
-            if shared_count < min_shared_prompts:
+            if shared_count < (1 if impute_first else min_shared_prompts):
                 score = 0.0
             else:
                 agreements = [
