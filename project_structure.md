@@ -3,6 +3,12 @@
 ```
 grpo-group-discovery/
 ├── discover.py                         # Main CLI entry point
+├── serve_canvas.py                     # Root CLI relay for canvas server
+├── canvas/                             # Interactive Evaluation Canvas Web App
+│   ├── index.html                      # Canvas dashboard layout & filter controls
+│   ├── styles.css                      # Modern dark-mode glassmorphic theme
+│   ├── data.js                         # Evaluation benchmark dataset & metrics
+│   └── app.js                          # Dynamic sorting, filtering & chart rendering
 ├── config/
 │   ├── baselines/                      # Reference anchors & controls
 │   │   ├── single_group.yaml           # Lower bound (pooled data)
@@ -38,13 +44,17 @@ grpo-group-discovery/
 │   ├── export/
 │   │   └── artifacts.py                # Parquet/CSV/JSON/MD/PNG export
 │   └── utils.py
+├── scripts/
+│   ├── run_baseline.sh                 # Shell script for running baseline suite
+│   └── serve_canvas.py                 # HTTP server script for canvas web app
 ├── tests/
 │   ├── test_analysis.py
 │   └── test_baselines.py
 ├── docs/
 │   ├── artifact-format.md
-│   └── methods.md
-└── outputs/
+│   ├── methods.md
+│   └── methods_overview.md
+└── outputs/                            # Run artifacts & JSON evaluation outputs
 ```
 
 See [docs/methods.md](docs/methods.md) for method descriptions and evaluation details.

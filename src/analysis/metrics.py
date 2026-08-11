@@ -46,30 +46,34 @@ def compute_entropy_reduction(
             "relative_entropy_drop": 0.0,
         }
 
-    # 1. Compute pooled entropy per question
-    pooled_q_entropies = []
-    for _, q_group in merged.groupby("qkey"):
-        # Mean probability distribution across all records for this question
-        probs = np.mean(np.stack(q_group["prob_y"].to_numpy()), axis=0)
-        pooled_q_entropies.append(compute_shannon_entropy(probs))
-    pooled_entropy = float(np.mean(pooled_q_entropies)) if pooled_q_entropies else 0.0
-
-    # 2. Compute per-cluster entropy per question
-    total_entities = assignments["entity_id"].nunique()
-    weighted_cluster_entropy = 0.0
-
-    for cluster_id, c_group in merged.groupby("cluster_id"):
-        n_cluster_entities = c_group["entity_id"].nunique()
-        weight = n_cluster_entities / max(total_entities, 1)
-
-        c_q_entropies = []
-        for _, q_group in c_group.groupby("qkey"):
-            probs = np.mean(np.stack(q_group["prob_y"].to_numpy()), axis=0)
-            c_q_entropies.append(compute_shannon_entropy(probs))
-
-        c_entropy = float(np.mean(c_q_entropies)) if c_q_entropies else 0.0
-        weighted_cluster_entropy += weight * c_entropy
-
+    # Compute per-question entropy reduction on shared support
+    qkeys = merged["qkey"].unique()
+    total_entities = max(assignments["entity_id"].nunique(), 1)
+    
+    q_pooled_entropies = []
+    q_cluster_entropies = []
+    
+    for qkey, q_records in merged.groupby("qkey"):
+        # Pooled entropy for this question
+        probs_pooled = np.mean(np.stack(q_records["prob_y"].to_numpy()), axis=0)
+        h_pooled = compute_shannon_entropy(probs_pooled)
+        
+        # Weighted cluster entropy for this question
+        h_cluster_weighted = 0.0
+        q_total_entities = q_records["entity_id"].nunique()
+        
+        for c_id, c_q_records in q_records.groupby("cluster_id"):
+            n_c = c_q_records["entity_id"].nunique()
+            w_c = n_c / max(q_total_entities, 1)
+            probs_c = np.mean(np.stack(c_q_records["prob_y"].to_numpy()), axis=0)
+            h_c = compute_shannon_entropy(probs_c)
+            h_cluster_weighted += w_c * h_c
+            
+        q_pooled_entropies.append(h_pooled)
+        q_cluster_entropies.append(h_cluster_weighted)
+        
+    pooled_entropy = float(np.mean(q_pooled_entropies)) if q_pooled_entropies else 0.0
+    weighted_cluster_entropy = float(np.mean(q_cluster_entropies)) if q_cluster_entropies else 0.0
     entropy_reduction = max(0.0, pooled_entropy - weighted_cluster_entropy)
     relative_drop = (
         entropy_reduction / pooled_entropy if pooled_entropy > 1e-9 else 0.0

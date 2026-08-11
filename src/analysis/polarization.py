@@ -60,25 +60,27 @@ def extract_top_polarizing_questions(
                 arr = np.zeros(len(options), dtype=np.float64)
             cluster_probs[int(c_id)] = arr
 
-        # Compute max pairwise L1 divergence between cluster distributions
+        # Compute max pairwise L1 divergence between clusters with valid observations
         max_l1 = 0.0
-        max_pair = (cluster_ids[0], cluster_ids[1])
-        for i in range(k):
-            for j in range(i + 1, k):
-                p_i = cluster_probs[cluster_ids[i]]
-                p_j = cluster_probs[cluster_ids[j]]
+        max_pair = (cluster_ids[0], cluster_ids[1] if k > 1 else cluster_ids[0])
+        valid_c_ids = [c_id for c_id in cluster_ids if not q_group[q_group["cluster_id"] == c_id].empty]
+        if len(valid_c_ids) >= 2:
+            for i in range(len(valid_c_ids)):
+                for j in range(i + 1, len(valid_c_ids)):
+                    c_i, c_j = valid_c_ids[i], valid_c_ids[j]
+                    p_i = cluster_probs[c_i]
+                    p_j = cluster_probs[c_j]
 
-                # Ensure equal length padding if needed
-                max_len = max(len(p_i), len(p_j))
-                if len(p_i) < max_len:
-                    p_i = np.pad(p_i, (0, max_len - len(p_i)))
-                if len(p_i) > len(p_j):
-                    p_j = np.pad(p_j, (0, max_len - len(p_j)))
+                    max_len = max(len(p_i), len(p_j))
+                    if len(p_i) < max_len:
+                        p_i = np.pad(p_i, (0, max_len - len(p_i)))
+                    if len(p_j) < max_len:
+                        p_j = np.pad(p_j, (0, max_len - len(p_j)))
 
-                l1_dist = float(0.5 * np.sum(np.abs(p_i - p_j)))
-                if l1_dist > max_l1:
-                    max_l1 = l1_dist
-                    max_pair = (cluster_ids[i], cluster_ids[j])
+                    l1_dist = float(0.5 * np.sum(np.abs(p_i - p_j)))
+                    if l1_dist > max_l1:
+                        max_l1 = l1_dist
+                        max_pair = (c_i, c_j)
 
         # Convert numpy distributions to lists
         cluster_dist_dict = {

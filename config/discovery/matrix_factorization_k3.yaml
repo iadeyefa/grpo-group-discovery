@@ -1,0 +1,24 @@
+# ==============================================================================
+# DISCOVERY METHOD 3 (K=3): Sparse Matrix Factorization (NMF K=3, 5 Latent Components)
+# ==============================================================================
+dataset:
+  name: Anthropic/llm_global_opinions
+  cache_dir: null
+  source_groups: null
+
+entities:
+  mode: observed
+  n_simulated_per_group: 10
+  random_state: 42
+
+clustering:
+  method: matrix_factorization
+  n_clusters: 3
+  random_state: 42
+  n_components: 5
+  factorization_method: nmf
+
+export:
+  output_dir: outputs
+  run_name: matrix_factorization_k3
+  dataset_prefix: goqa_cluster
