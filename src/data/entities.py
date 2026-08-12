@@ -123,24 +123,27 @@ def _build_blind_entities(preference_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _build_individual_entities(preference_df: pd.DataFrame) -> pd.DataFrame:
-    """Use pre-existing entity_id column from pairwise preference data.
+    """Register one individual respondent entity per preference row ($N=46,244$).
 
-    For datasets where each row already has an individual_id / entity_id,
-    this mode simply extracts the unique entity list and optional source_group.
+    Each row represents an individual person's survey choice. Country/nationality metadata
+    is kept in source_group for Oracle benchmark comparison, but stripped during clustering.
     """
-    if "entity_id" not in preference_df.columns:
-        raise ValueError(
-            "Individual entity mode requires 'entity_id' column in preference_df. "
-            "Use load_pairwise loaders or set entities.mode to 'observed' or 'blind'."
-        )
+    if "entity_id" in preference_df.columns:
+        cols = ["entity_id"]
+        if "source_group" in preference_df.columns:
+            cols.append("source_group")
+        entities = preference_df[cols].drop_duplicates().reset_index(drop=True)
+    else:
+        rows = []
+        for i, row in preference_df.iterrows():
+            item = {"entity_id": _opaque_id(i)}
+            if "source_group" in row:
+                item["source_group"] = str(row["source_group"])
+            rows.append(item)
+        entities = pd.DataFrame(rows)
 
-    cols = ["entity_id"]
-    if "source_group" in preference_df.columns:
-        cols.append("source_group")
-
-    entities = preference_df[cols].drop_duplicates().reset_index(drop=True)
     logger.info(
-        "Registered %d individual entities from preference records",
+        "Registered %d individual user entities from preference records",
         len(entities),
     )
     return entities
@@ -155,7 +158,16 @@ def attach_entity_ids(
     preference_df: pd.DataFrame,
     entities: pd.DataFrame,
 ) -> pd.DataFrame:
-    """Join entity_id onto preference rows via source_group (for feature building)."""
+    """Join entity_id onto preference rows (for feature building)."""
+    if len(entities) == len(preference_df) and entities["entity_id"].nunique() == len(entities):
+        merged = preference_df.copy()
+        merged["entity_id"] = entities["entity_id"].to_numpy()
+        logger.debug(
+            "Attached entity_id positionally to %d individual preference rows",
+            len(merged),
+        )
+        return merged
+
     if "source_group" in entities.columns:
         registry = entities[["entity_id", "source_group"]].drop_duplicates()
         merged = preference_df.merge(registry, on="source_group", how="inner")
@@ -166,15 +178,6 @@ def attach_entity_ids(
         )
         return merged
 
-    if len(entities) != len(preference_df):
-        raise ValueError(
-            "Blind entity registry must have the same number of rows as preference_df"
-        )
-
     merged = preference_df.copy()
     merged["entity_id"] = entities["entity_id"].to_numpy()
-    logger.debug(
-        "Attached entity_id to %d preference rows via positional blind mapping",
-        len(merged),
-    )
     return merged

@@ -122,10 +122,12 @@ def compute_cluster_cohesion(
         if n_k <= 1:
             mean_sim = 1.0
         else:
-            sim_matrix = cosine_similarity(X_k)
-            # Upper triangle without diagonal
-            triu_indices = np.triu_indices(n_k, k=1)
-            mean_sim = float(np.mean(sim_matrix[triu_indices])) if len(triu_indices[0]) > 0 else 1.0
+            # O(N) fast mean cosine similarity: sum(x_i . x_j for i != j) / (n_k * (n_k - 1))
+            sum_vec = np.sum(X_k, axis=0)
+            norm_sq = float(np.dot(sum_vec, sum_vec))
+            row_norms_sq = float(np.sum(np.square(X_k)))
+            mean_sim = float((norm_sq - row_norms_sq) / max(n_k * (n_k - 1), 1))
+            mean_sim = float(np.clip(mean_sim, -1.0, 1.0))
 
         per_cluster_cohesion[int(cluster_id)] = round(mean_sim, 4)
         overall_cohesion += (n_k / max(total_entities, 1)) * mean_sim

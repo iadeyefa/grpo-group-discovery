@@ -42,6 +42,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Render Scorecard Table
   function renderScorecard() {
     let filteredRuns = [...data.runs];
+    if (currentModeFilter !== 'all') {
+      filteredRuns = filteredRuns.filter(run => run.mode === currentModeFilter);
+    }
 
     filteredRuns.sort((a, b) => {
       let valA = a[sortField];
@@ -79,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <span style="font-size:0.75rem; color:var(--text-muted);">${run.tier}</span>
           </td>
           <td>
-            <span class="mode-tag ${run.mode}">${run.mode}</span>
+            <span class="mode-tag ${run.mode}">${run.mode === 'observed' ? 'COUNTRY' : run.mode.toUpperCase()}</span>
           </td>
           <td>${run.n_entities.toLocaleString()}</td>
           <td>

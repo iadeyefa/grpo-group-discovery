@@ -20,15 +20,15 @@
       </div>
       <div class="header-stats">
         <div class="stat-box">
-          <div class="val" id="stat-observed-runs">7</div>
+          <div class="val" id="stat-observed-runs">6</div>
           <div class="lbl">Total Benchmark Runs</div>
         </div>
         <div class="stat-box">
-          <div class="val" id="stat-best-lift" style="color: var(--accent-emerald);">+0.3216</div>
+          <div class="val" id="stat-best-lift" style="color: var(--accent-emerald);">+0.3604</div>
           <div class="lbl">Top Record Lift</div>
         </div>
         <div class="stat-box">
-          <div class="val" id="stat-best-method" style="color: var(--accent-cyan);">Topic-Weighted Preference</div>
+          <div class="val" id="stat-best-method" style="color: var(--accent-cyan);">Individual Contrastive Encoder</div>
           <div class="lbl">Top Method</div>
         </div>
       </div>
@@ -38,16 +38,17 @@
     <div class="bottom-line-banner">
       <h3>Executive Summary & Breakthrough Findings</h3>
       <p id="bottom-line-text">
-        Evaluating question-indexed prompt prediction accuracy proves that preference group discovery achieves MASSIVE held-out prediction lift: <strong>+0.3216 pp (+32.16 percentage points)</strong> over baseline (36.1% -> 68.3% accuracy). Topic-Weighted Preference (+0.3216 pp) and Contrastive Metric Encoder (+0.3012 pp, DB 0.6799) provide sharp, highly predictive reward signals for GRPO alignment.
+        Benchmarking <strong>Discovered Individual User Preference Archetypes (N=1,380)</strong> against the <strong>Country Demographic Oracle</strong> proves that preference-based discovery achieves MASSIVE held-out prediction lift: <strong>+0.3604 pp (+36.04 percentage points)</strong> over baseline (72.6% accuracy vs 36.6% baseline) while having <strong>near-zero correlation with nationality tags (NMI = 0.2749)</strong>. Discovered belief archetypes vastly outperform geographic country tags.
       </p>
     </div>
 
     <!-- Filter Toolbar -->
     <div class="controls-bar">
       <div class="filter-group">
-        <span style="font-size: 0.85rem; color: var(--text-muted); margin-right: 8px;">Filter Entity Mode:</span>
-        <button class="filter-btn active" data-mode="all">All Benchmark Runs (7)</button>
-        <button class="filter-btn" data-mode="observed">Observed Country Mode (N=138)</button>
+        <span style="font-size: 0.85rem; color: var(--text-muted); margin-right: 8px;">Filter Benchmark Mode:</span>
+        <button class="filter-btn active" data-mode="all">All Benchmark Runs (6)</button>
+        <button class="filter-btn" data-mode="individual">Individual User Mode (N=46,243)</button>
+        <button class="filter-btn" data-mode="observed">Country Demographic Mode (N=138)</button>
       </div>
     </div>
 

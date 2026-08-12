@@ -40,17 +40,10 @@ def run(
     entity_ids = list(features_df.index)
     n_entities = len(entity_ids)
 
-    # Compute pairwise similarity matrix S
-    rng = np.random.default_rng(random_state)
-    sim_mat = np.dot(X, X.T)
-    
-    # Contrastive projection W_proj (random orthogonal initialization refined by triplet loss)
-    # W_proj: proj_dim x input_dim
-    U, S, Vt = np.linalg.svd(sim_mat)
-    contrastive_proj = U[:, :proj_dim]  # Top principal components of inter-entity similarity space
-    
-    # Projected contrastive representations
-    X_contrastive = np.dot(sim_mat, contrastive_proj)
+    # Contrastive preference projection via TruncatedSVD on X (direct latent belief space)
+    from sklearn.decomposition import TruncatedSVD
+    svd = TruncatedSVD(n_components=proj_dim, random_state=random_state)
+    X_contrastive = svd.fit_transform(X)
     X_contrastive = normalize(X_contrastive, norm="l2", axis=1)
 
     logger.info("Projected %d entities into %d-dimensional contrastive preference space", n_entities, proj_dim)

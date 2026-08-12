@@ -1,0 +1,29 @@
+# ==============================================================================
+# DISCOVERY METHOD: Simulated Individual User Contrastive Encoder
+# ==============================================================================
+run_name: discovery_simulated_contrastive_encoder
+
+dataset:
+  name: Anthropic/llm_global_opinions
+  cache_dir: null
+  source_groups: null
+
+entities:
+  mode: simulated
+  n_simulated_per_group: 10
+  random_state: 42
+
+features:
+  method: weighted_opinion_vector
+  normalize: true
+
+clustering:
+  method: contrastive_encoder
+  n_clusters: 5
+  random_state: 42
+  projection_dim: 10
+
+export:
+  output_dir: outputs
+  run_name: discovery_simulated_contrastive_encoder
+  dataset_prefix: goqa_cluster
