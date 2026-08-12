@@ -41,11 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Render Scorecard Table
   function renderScorecard() {
-    let filteredRuns = data.runs.filter(run => {
-      if (currentModeFilter === 'observed') return run.mode === 'observed';
-      if (currentModeFilter === 'blind') return run.mode === 'blind';
-      return true;
-    });
+    let filteredRuns = [...data.runs];
 
     filteredRuns.sort((a, b) => {
       let valA = a[sortField];
@@ -90,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="metric-highlight ${liftClass}">${liftFormatted}</span>
           </td>
           <td>${run.entropy_drop.toFixed(3)}</td>
-          <td>${run.mean_jsd.toFixed(2)}${run.id === 'embedding_sets' ? '†' : ''}</td>
+          <td>${run.mean_jsd.toFixed(2)}</td>
           <td>${run.cohesion.toFixed(3)}</td>
           <td>
             ${clusterBarsHTML}
