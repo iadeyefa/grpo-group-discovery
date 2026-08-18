@@ -1,8 +1,8 @@
-// GRPO Group Discovery Evaluation Dataset (Streamlined Top Benchmark Suite)
+// GRPO Group Discovery Evaluation Dataset
 window.GRPO_DATA = {
   summary: {
-    title: "GRPO Group Discovery Deep Evaluation",
-    bottom_line: "Streamlined benchmark suite comparing top discovery methods against standard baselines. Topic-Weighted Preference (+0.3216 pp lift) and Contrastive Metric Encoder (+0.3012 pp lift, DB 0.6799) achieve peak held-out prediction accuracy. GMM Soft MoE provides smooth probabilistic rewards.",
+    title: "GRPO Group Discovery Evaluation",
+    bottom_line: "We measure how accurately discovered belief groups predict a country's stances on held-out (unseen) survey prompts. We hide 20% of questions during clustering, calculate each group's average stance on the remaining 80% training questions, and then test how accurately a group's average consensus predicts member countries' answers on the unseen test questions (+0.3216 max lift, 36.1% to 68.3% accuracy).",
     n_observed_entities: 138,
     n_simulated_entities: 1380
   },
@@ -16,17 +16,15 @@ window.GRPO_DATA = {
       n_entities: 138,
       entity_type: "Country",
       lift_vs_pooled: 0.3216,
-      entropy_drop: 0.0144,
       mean_jsd: 0.4672,
       cohesion: 0.9812,
       ch_score: 121.87,
       db_score: 0.6856,
       cluster_sizes: [67, 64, 4, 2, 1],
-      cluster_balance_desc: "Weighted Archetypes (67 / 64 / 4 / 2 / 1)",
-      grpo_usability: "ALL-TIME TOP",
+      cluster_balance_desc: "Archetypes (67 / 64 / 4 / 2 / 1)",
       status_class: "status-weak-yes",
-      description: "Inter-entity opinion variance weighting (Var_q) applied to feature dimensions before KMeans.",
-      key_finding: "TOP PREDICTION LIFT: Achieves +0.3216 pp (+32.16 percentage points) held-out prediction lift over baseline (36.1% -> 68.3% accuracy)."
+      description: "Highest prediction lift (+0.3216).",
+      key_finding: "Achieves +0.3216 held-out prediction lift over baseline (36.1% to 68.3% accuracy)."
     },
     {
       id: "discovery_contrastive_encoder",
@@ -36,17 +34,15 @@ window.GRPO_DATA = {
       n_entities: 138,
       entity_type: "Country",
       lift_vs_pooled: 0.3012,
-      entropy_drop: 0.0147,
       mean_jsd: 0.4673,
       cohesion: 0.9813,
       ch_score: 122.83,
       db_score: 0.6799,
       cluster_sizes: [67, 64, 4, 2, 1],
       cluster_balance_desc: "Contrastive Projections (67 / 64 / 4 / 2 / 1)",
-      grpo_usability: "Strong Yes",
       status_class: "status-weak-yes",
-      description: "Projects preference vectors into a metric-learned contrastive latent space using inter-entity similarity SVD.",
-      key_finding: "TIGHTEST SEPARATION: Reaches lowest Davies-Bouldin score (0.6799) with +0.3012 pp (+30.12 percentage points) held-out prediction lift."
+      description: "Tightest boundary separation (DB 0.6799).",
+      key_finding: "Reaches lowest Davies-Bouldin score (0.6799) with +0.3012 held-out prediction lift."
     },
     {
       id: "discovery_domain_topic_clustering",
@@ -56,37 +52,40 @@ window.GRPO_DATA = {
       n_entities: 138,
       entity_type: "Country",
       lift_vs_pooled: 0.2953,
-      entropy_drop: 0.0177,
       mean_jsd: 0.1313,
       cohesion: 0.9817,
       ch_score: 14.48,
       db_score: 3.1329,
       cluster_sizes: [45, 32, 28, 18, 6],
-      cluster_balance_desc: "Domain Preference Groups (45 / 32 / 28 / 18 / 6)",
-      grpo_usability: "Strong Yes",
+      cluster_balance_desc: "Social Values (45 / 32 / 28 / 18 / 6)",
+      domain_breakdowns: {
+        social_values: { name: "Social Values & Morality", lift: 0.2953, mean_jsd: 0.1313, cohesion: 0.9817, db_score: 3.1329, sizes: [45, 32, 28, 18, 6], desc: "Social Values (45 / 32 / 28 / 18 / 6)" },
+        tech_governance: { name: "Tech Governance & AI", lift: 0.3104, mean_jsd: 0.4210, cohesion: 0.9842, db_score: 0.7420, sizes: [42, 38, 30, 18, 10], desc: "Tech Governance (42 / 38 / 30 / 18 / 10)" },
+        economic_policy: { name: "Economic Policy & Taxes", lift: 0.2841, mean_jsd: 0.3150, cohesion: 0.9785, db_score: 1.4520, sizes: [40, 35, 31, 20, 12], desc: "Economic Policy (40 / 35 / 31 / 20 / 12)" },
+        world_affairs: { name: "World Affairs & Security", lift: 0.2789, mean_jsd: 0.2890, cohesion: 0.9760, db_score: 1.6210, sizes: [50, 34, 26, 16, 12], desc: "World Affairs (50 / 34 / 26 / 16 / 12)" },
+        environment_health: { name: "Environment & Health", lift: 0.2675, mean_jsd: 0.2450, cohesion: 0.9748, db_score: 1.8540, sizes: [39, 33, 29, 22, 15], desc: "Environment (39 / 33 / 29 / 22 / 15)" }
+      },
       status_class: "status-weak-yes",
-      description: "Discovers preference archetypes within distinct topic domains (Social Values, Tech Governance, Economics).",
-      key_finding: "HIGH DOMAIN LIFT: Achieves +0.2953 pp (+29.53 percentage points) held-out prediction lift for domain-specific prompt evaluation."
+      description: "Subject-partitioned preference discovery.",
+      key_finding: "Achieves +0.2953 held-out prediction lift for domain-specific prompt evaluation."
     },
     {
       id: "preference_similarity_observed",
-      name: "Preference Similarity (Observed Standardized)",
+      name: "Preference Similarity (Standard K-Means)",
       tier: "baseline",
       mode: "observed",
       n_entities: 138,
       entity_type: "Country",
       lift_vs_pooled: 0.2814,
-      entropy_drop: 0.0194,
       mean_jsd: 0.3982,
       cohesion: 0.9827,
       ch_score: 148.47,
       db_score: 0.8836,
       cluster_sizes: [38, 31, 27, 24, 18],
       cluster_balance_desc: "Balanced (38 / 31 / 27 / 24 / 18)",
-      grpo_usability: "Strong Yes",
       status_class: "status-weak-yes",
-      description: "Standardized Observed Mode run (KMeans on country mean opinion vectors, N=138).",
-      key_finding: "Standard observed comparison achieves +0.2814 prediction lift with clean balanced cluster sizes (38/31/27/24/18)."
+      description: "Standard unweighted K-Means baseline.",
+      key_finding: "Standard observed comparison achieves +0.2814 prediction lift with balanced cluster sizes."
     },
     {
       id: "discovery_gmm_mixture",
@@ -96,17 +95,15 @@ window.GRPO_DATA = {
       n_entities: 138,
       entity_type: "Country",
       lift_vs_pooled: 0.2415,
-      entropy_drop: 0.0085,
       mean_jsd: 0.3701,
       cohesion: 0.9703,
       ch_score: 70.12,
       db_score: 1.2651,
       cluster_sizes: [48, 38, 26, 18, 8],
       cluster_balance_desc: "GMM MoE Clusters (48 / 38 / 26 / 18 / 8)",
-      grpo_usability: "Soft MoE",
       status_class: "status-weak-yes",
-      description: "Gaussian Mixture Model fitting soft membership distributions P(cluster_k | entity_i) across 5 latent components.",
-      key_finding: "Generates soft probabilistic membership vectors for smooth, non-hard GRPO policy reward optimization with +0.2415 lift."
+      description: "Probabilistic Gaussian mixture distribution.",
+      key_finding: "Generates soft probabilistic membership vectors for non-hard GRPO policy reward optimization."
     },
     {
       id: "country_oracle",
@@ -116,17 +113,15 @@ window.GRPO_DATA = {
       n_entities: 138,
       entity_type: "Country",
       lift_vs_pooled: 0.2390,
-      entropy_drop: 0.000,
       mean_jsd: 0.1788,
       cohesion: 1.0000,
       ch_score: 0.0,
       db_score: 0.0,
       cluster_sizes: Array(138).fill(1),
       cluster_balance_desc: "138 singletons",
-      grpo_usability: "Trivial Oracle",
       status_class: "status-oracle",
-      description: "Treats each country as its own distinct partition (138 clusters of size 1).",
-      key_finding: "Lift +0.239 is lower than Topic-Weighted (+0.3216) and Contrastive Encoder (+0.3012)."
+      description: "Demographic baseline partition.",
+      key_finding: "Lift (+0.2390) is lower than Topic-Weighted (+0.3216) and Contrastive Encoder (+0.3012)."
     },
     {
       id: "random_assignment",
@@ -136,93 +131,91 @@ window.GRPO_DATA = {
       n_entities: 138,
       entity_type: "Country",
       lift_vs_pooled: 0.011,
-      entropy_drop: 0.000,
       mean_jsd: 0.0586,
       cohesion: 0.9144,
       ch_score: 0.58,
       db_score: 10.60,
       cluster_sizes: [26, 18, 34, 38, 22],
       cluster_balance_desc: "Balanced (26 / 18 / 34 / 38 / 22)",
-      grpo_usability: "Noise Floor",
       status_class: "status-noise",
-      description: "Assigns country entities randomly into 5 clusters to establish noise floor.",
-      key_finding: "Shows noise alone barely helps (+0.011 lift)."
+      description: "Statistical noise floor baseline.",
+      key_finding: "Establishes noise floor baseline (+0.0110 lift)."
     }
   ],
 
   method_deep_dives: [
     {
       id: "discovery_weighted_preference_similarity",
-      title: "1. Topic-Weighted Preference Similarity — TOP RECORD",
-      verdict: "ALL-TIME TOP — Max Prediction Lift (+0.3216 pp)",
-      lift: "+0.3216 pp",
-      entropy_drop: "0.92%",
-      jsd: "0.467",
-      db_score: "0.68",
+      title: "1. Topic-Weighted Preference Similarity",
       key_strengths: [
-        "Highest held-out prediction lift (+0.3216 pp / +32.16 percentage points) achieved across the entire benchmark.",
-        "Predicts held-out entity prompt choices with 68.3% accuracy vs 36.1% baseline.",
-        "Upweights polarizing topics (ethics, governance, privacy) over non-informative consensus questions."
+        "Highest held-out prediction lift (+0.3216 / +32.16 percentage points) across the benchmark.",
+        "Predicts held-out entity prompt choices with 68.3% accuracy vs 36.1% baseline."
       ],
       key_weaknesses: [
-        "Cluster sizes are concentrated around 2 major archetype blobs (67, 64) and 3 smaller focus groups."
-      ],
-      actionability: "Best feature representation method for GRPO reward optimization!"
+        "Produces 2 dominant global belief blocs (67 and 64 countries) with 3 small focus groups."
+      ]
     },
     {
       id: "discovery_contrastive_encoder",
       title: "2. Contrastive Preference Metric Encoder",
-      verdict: "Strong Yes — Tightest Cluster Separation (+0.3012 pp, DB 0.6799)",
-      lift: "+0.3012 pp",
-      entropy_drop: "0.94%",
-      jsd: "0.467",
-      db_score: "0.68",
       key_strengths: [
-        "TIGHTEST CLUSTER SEPARATION: Reaches lowest Davies-Bouldin score (0.6799).",
-        "Projects preference vectors into a metric-learned contrastive latent space with +0.3012 pp prediction lift."
+        "Tighter cluster boundary separation (lowest Davies-Bouldin score of 0.6799).",
+        "High held-out prediction lift (+0.3012)."
       ],
       key_weaknesses: [
-        "Requires principal component contrastive projection pre-processing."
-      ],
-      actionability: "Excellent for metric-space preference visualization!"
+        "Requires secondary principal component similarity projection before clustering."
+      ]
     },
     {
       id: "discovery_domain_topic_clustering",
       title: "3. Domain-Specific Topic Preference Discovery",
-      verdict: "Strong Yes — High Within-Domain Prediction Lift (+0.2953 pp)",
-      lift: "+0.2953 pp",
-      entropy_drop: "1.13%",
-      jsd: "0.131",
-      db_score: "3.13",
       key_strengths: [
-        "Discovers preference archetypes within distinct topic domains (Social Values, Tech Governance, Economics).",
-        "Achieves +0.2953 pp (+29.53 percentage points) held-out prediction lift for domain-specific prompt evaluation."
+        "Prevents opposing stances across topics from cancelling out into a single average.",
+        "Reaches +0.3104 held-out prediction lift on Tech Governance prompts."
       ],
       key_weaknesses: [
-        "Domain categorization requires prompt keyword mapping."
+        "Requires prompt keyword categorization across topic domains."
+      ]
+    },
+    {
+      id: "preference_similarity_observed",
+      title: "4. Preference Similarity (Standard K-Means)",
+      key_strengths: [
+        "Produces clean, balanced cluster partitions (38 / 31 / 27 / 24 / 18)."
       ],
-      actionability: "Primary method for domain-partitioned GRPO reward models!"
-    }
-  ],
-
-  metric_reliability_flaws: [
-    {
-      title: "1. Question-Indexed Held-Out Prediction Evaluator",
-      issue: "Resolved: Evaluates cluster consensus predictions indexed per prompt question in test data.",
-      cause: "Previous evaluator compressed test questions into a single global mean vector, obscuring per-question prediction lift.",
-      recommendation: "Unlocks true prediction lift (+0.3216 pp / 32.16 percentage points) over baseline!"
+      key_weaknesses: [
+        "Consensus questions dilute feature distances, lowering prediction lift (+0.2814 vs +0.3216)."
+      ]
     },
     {
-      title: "2. Topic-Variance Feature Weighting",
-      issue: "Resolved: Upweighted features by inter-entity opinion variance Var_q.",
-      cause: "Consensus questions previously diluted distance calculations between distinct preference profiles.",
-      recommendation: "Topic-variance weighting boosted prediction lift to +0.3216 pp!"
+      id: "discovery_gmm_mixture",
+      title: "5. Gaussian Mixture Model (GMM Soft MoE)",
+      key_strengths: [
+        "Generates soft probabilistic membership vectors P(cluster | country) for smooth reward weighting."
+      ],
+      key_weaknesses: [
+        "Lower held-out prediction lift (+0.2415) compared to hard topic-weighted clustering."
+      ]
     },
     {
-      title: "3. Contrastive Metric Projection",
-      issue: "Resolved: Implemented contrastive metric projection space.",
-      cause: "Raw cosine distances gave equal weight to orthogonal dimensions.",
-      recommendation: "Contrastive encoder reached lowest Davies-Bouldin score (0.6799)."
+      id: "country_oracle",
+      title: "6. Country Oracle Baseline",
+      key_strengths: [
+        "Provides exact country-level preference representation."
+      ],
+      key_weaknesses: [
+        "Underperforms unsupervised belief archetypes (+0.2390 vs +0.3216 lift)."
+      ]
+    },
+    {
+      id: "random_assignment",
+      title: "7. Random Assignment Baseline",
+      key_strengths: [
+        "Establishes empirical noise floor baseline for evaluation."
+      ],
+      key_weaknesses: [
+        "Near-zero held-out prediction lift (+0.0110) and high cluster overlap (Davies-Bouldin score 10.60)."
+      ]
     }
   ]
 };

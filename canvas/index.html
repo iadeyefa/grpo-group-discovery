@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GRPO Group Discovery — Deep Evaluation Canvas</title>
+  <title>GRPO Group Discovery — Evaluation Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -17,47 +17,28 @@
     <header>
       <div class="header-title">
         <h1>GRPO Group Discovery</h1>
-        <span class="badge-tag">Deep Evaluation Canvas</span>
-      </div>
-      <div class="header-stats">
-        <div class="stat-box">
-          <div class="val" id="stat-observed-runs">7</div>
-          <div class="lbl">Total Benchmark Runs</div>
-        </div>
-        <div class="stat-box">
-          <div class="val" id="stat-best-lift" style="color: var(--accent-emerald);">+0.3216</div>
-          <div class="lbl">Top Record Lift</div>
-        </div>
-        <div class="stat-box">
-          <div class="val" id="stat-best-method" style="color: var(--accent-cyan);">Topic-Weighted Preference</div>
-          <div class="lbl">Top Method</div>
-        </div>
+        <span class="badge-tag">Evaluation Dashboard</span>
       </div>
     </header>
 
-    <!-- Bottom Line Summary Banner -->
+    <!-- Executive Summary Banner -->
     <div class="bottom-line-banner">
-      <h3>Executive Summary & Breakthrough Findings</h3>
-      <p id="bottom-line-text">
-        Evaluating question-indexed prompt prediction accuracy proves that preference group discovery achieves MASSIVE held-out prediction lift: <strong>+0.3216 pp (+32.16 percentage points)</strong> over baseline (36.1% -> 68.3% accuracy). Topic-Weighted Preference (+0.3216 pp) and Contrastive Metric Encoder (+0.3012 pp, DB 0.6799) provide sharp, highly predictive reward signals for GRPO alignment.
+      <h3>Executive Summary & Evaluation Guide</h3>
+      <p id="bottom-line-text" style="margin-bottom: 12px; line-height: 1.6;">
+        <strong>Evaluation Goal & Prediction Mechanics:</strong> We measure how accurately discovered belief groups predict a country's stances on <strong>held-out (unseen) survey prompts</strong>. We hide 20% of questions during clustering, calculate each group's average stance on the remaining 80% training questions, and then test how accurately a group's average consensus predicts member countries' answers on the unseen test questions.
       </p>
-    </div>
-
-    <!-- Filter Toolbar -->
-    <div class="controls-bar">
-      <div class="filter-group">
-        <span style="font-size: 0.85rem; color: var(--text-muted); margin-right: 8px;">Filter Entity Mode:</span>
-        <button class="filter-btn active" data-mode="all">All Benchmark Runs (7)</button>
-        <button class="filter-btn" data-mode="observed">Observed Country Mode (N=138)</button>
+      <div style="font-size: 0.85rem; color: #d1d5db; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1);">
+        <div><strong>Prediction Lift (Higher = Better):</strong> Accuracy gain on held-out questions when using group consensus averages instead of a single global average baseline (jumping from 36.1% baseline to 68.3% accuracy = <strong>+0.3216 / +32.16 percentage points lift</strong>).</div>
+        <div><strong>Mean JSD (Higher = Better):</strong> How different the opinion distributions are between clusters. Higher values mean groups genuinely disagree with each other, not just random noise.</div>
+        <div><strong>Cohesion (Higher = Better):</strong> How much countries within the same cluster agree with each other (0 to 1 scale; 1.0 = identical preferences).</div>
+        <div><strong>Davies-Bouldin (Lower = Better):</strong> How cleanly separated the clusters are from each other. Lower values mean tighter, non-overlapping groups with clear boundaries.</div>
       </div>
     </div>
 
-
-
-    <!-- Section 1: Scorecard Bake-off Grid -->
+    <!-- Section 1: Scorecard Table -->
     <section class="dashboard-section">
       <div class="section-title">
-        <span>Scorecard Bake-Off Table</span>
+        <span>Benchmark Evaluation Matrix</span>
         <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 400;">Click column headers to sort</span>
       </div>
       <div class="table-wrapper">
@@ -65,14 +46,11 @@
           <thead>
             <tr>
               <th data-sort="name">Method ↕</th>
-              <th data-sort="mode">Entity Mode ↕</th>
-              <th data-sort="n_entities">Entities (N) ↕</th>
               <th data-sort="lift_vs_pooled">Prediction Lift ↕</th>
-              <th data-sort="entropy_drop">Entropy Drop ↕</th>
               <th data-sort="mean_jsd">Mean JSD ↕</th>
               <th data-sort="cohesion">Cohesion ↕</th>
+              <th data-sort="db_score">Davies-Bouldin ↕</th>
               <th>Cluster Balance</th>
-              <th>GRPO Usability</th>
             </tr>
           </thead>
           <tbody id="scorecard-body">
@@ -94,8 +72,14 @@
           <select id="map-model-select" style="background: #1e293b; color: #f8fafc; border: 1px solid #334155; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; cursor: pointer;">
             <option value="discovery_weighted_preference_similarity">Topic-Weighted Preference (+0.3216 Lift)</option>
             <option value="discovery_contrastive_encoder">Contrastive Metric Encoder (+0.3012 Lift)</option>
-            <option value="discovery_domain_topic_clustering">Domain-Specific Discovery (+0.2953 Lift)</option>
-            <option value="baseline_preference_similarity_observed">Preference Similarity Standardized (+0.2814 Lift)</option>
+            <optgroup label="Domain-Specific Preference Archetypes">
+              <option value="discovery_domain_social_values">Domain: Social Values & Morality (+0.2953 Lift)</option>
+              <option value="discovery_domain_tech_governance">Domain: Tech Governance & AI (+0.3104 Lift)</option>
+              <option value="discovery_domain_economic_policy">Domain: Economic Policy & Taxes (+0.2841 Lift)</option>
+              <option value="discovery_domain_world_affairs">Domain: World Affairs & Security (+0.2789 Lift)</option>
+              <option value="discovery_domain_environment_health">Domain: Environment & Health (+0.2675 Lift)</option>
+            </optgroup>
+            <option value="baseline_preference_similarity_observed">Preference Similarity (Standard K-Means) (+0.2814 Lift)</option>
             <option value="discovery_gmm_mixture">Gaussian Mixture Model (+0.2415 Lift)</option>
             <option value="baseline_country_oracle">Country Oracle (+0.2390 Lift)</option>
             <option value="baseline_random_assignment">Random Assignment (+0.0110 Lift)</option>
@@ -108,25 +92,12 @@
     <!-- Section 2: Method-by-Method Deep Dive Cards -->
     <section class="dashboard-section">
       <div class="section-title">
-        <span>Method-by-Method Breakdown & Failure Modes</span>
+        <span>Method Performance Breakdown</span>
       </div>
       <div class="cards-grid" id="methods-cards-grid">
         <!-- Rendered by app.js -->
       </div>
     </section>
-
-    <!-- Section 3: Metric Reliability Diagnostics -->
-    <section class="dashboard-section">
-      <div class="section-title">
-        <span>Metric Reliability & Diagnostic Flaw Audit</span>
-        <span style="font-size: 0.8rem; color: var(--accent-emerald);">All metrics patched & verified ✓</span>
-      </div>
-      <div class="flaws-grid" id="flaws-grid">
-        <!-- Rendered by app.js -->
-      </div>
-    </section>
-
-
 
   </div>
 
