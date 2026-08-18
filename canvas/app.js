@@ -160,8 +160,75 @@ document.addEventListener('DOMContentLoaded', () => {
     `).join('');
   }
 
+  // Render Interactive World Map
+  function renderWorldMap(selectedModelId = 'discovery_weighted_preference_similarity') {
+    const allModelsData = window.WORLD_MAP_ALL_MODELS;
+    const mapContainer = document.getElementById('world-map-container');
+    if (!allModelsData || !mapContainer || typeof Plotly === 'undefined') return;
+
+    const modelObj = allModelsData[selectedModelId];
+    if (!modelObj || !modelObj.records) return;
+
+    const mapData = modelObj.records;
+    const locations = mapData.map(d => d.iso_alpha);
+    const z = mapData.map(d => d.cluster_id);
+    const hoverText = mapData.map(d => `<b>${d.source_group}</b><br>Cluster ${d.cluster_id}`);
+
+    const colorScale = [
+      [0.0, '#10b981'],  // Cluster 0 (Emerald)
+      [0.25, '#8b5cf6'], // Cluster 1 (Purple)
+      [0.50, '#3b82f6'], // Cluster 2 (Blue)
+      [0.75, '#f59e0b'], // Cluster 3 (Amber)
+      [1.0, '#ef4444']   // Cluster 4 (Red)
+    ];
+
+    const data = [{
+      type: 'choropleth',
+      locations: locations,
+      z: z,
+      text: hoverText,
+      hoverinfo: 'text',
+      colorscale: colorScale,
+      showscale: false,
+      marker: {
+        line: {
+          color: '#1e293b',
+          width: 0.5
+        }
+      }
+    }];
+
+    const layout = {
+      margin: { r: 0, t: 10, l: 0, b: 10 },
+      paper_bgcolor: '#0f172a',
+      plot_bgcolor: '#0f172a',
+      geo: {
+        bgcolor: '#0f172a',
+        lakecolor: '#1e293b',
+        showlakes: true,
+        showcoastlines: true,
+        coastlinecolor: '#334155',
+        showframe: false,
+        showcountries: true,
+        countrycolor: '#334155',
+        projection: { type: 'natural earth' }
+      }
+    };
+
+    Plotly.newPlot('world-map-container', data, layout, { responsive: true, displayModeBar: false });
+  }
+
+  // Model Select Dropdown Handler
+  const mapSelectEl = document.getElementById('map-model-select');
+  if (mapSelectEl) {
+    mapSelectEl.addEventListener('change', (e) => {
+      renderWorldMap(e.target.value);
+    });
+  }
+
   // Initial Render
   renderScorecard();
+  renderWorldMap('discovery_weighted_preference_similarity');
   renderMethodCards();
   renderMetricFlaws();
   renderRoadmap();

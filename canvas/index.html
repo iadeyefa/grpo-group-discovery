@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 </head>
 <body>
   <div class="container">
@@ -81,6 +82,29 @@
       </div>
     </section>
 
+    <!-- Section 1.5: Interactive World Map of Preference Archetypes -->
+    <section class="dashboard-section">
+      <div class="section-title" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+        <div>
+          <span>Interactive World Map — Discovered Preference Archetypes</span>
+          <span style="font-size: 0.8rem; color: var(--accent-cyan); display: block; margin-top: 2px;">Cross-National Belief Blocs vs Demographic Borders</span>
+        </div>
+        <div>
+          <label for="map-model-select" style="font-size: 0.85rem; color: var(--text-muted); margin-right: 8px;">Select Model:</label>
+          <select id="map-model-select" style="background: #1e293b; color: #f8fafc; border: 1px solid #334155; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; cursor: pointer;">
+            <option value="discovery_weighted_preference_similarity">Topic-Weighted Preference (+0.3216 Lift)</option>
+            <option value="discovery_contrastive_encoder">Contrastive Metric Encoder (+0.3012 Lift)</option>
+            <option value="discovery_domain_topic_clustering">Domain-Specific Discovery (+0.2953 Lift)</option>
+            <option value="baseline_preference_similarity_observed">Preference Similarity Standardized (+0.2814 Lift)</option>
+            <option value="discovery_gmm_mixture">Gaussian Mixture Model (+0.2415 Lift)</option>
+            <option value="baseline_country_oracle">Country Oracle (+0.2390 Lift)</option>
+            <option value="baseline_random_assignment">Random Assignment (+0.0110 Lift)</option>
+          </select>
+        </div>
+      </div>
+      <div id="world-map-container" style="width: 100%; height: 480px; background: #0f172a; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); overflow: hidden; margin-top: 12px;"></div>
+    </section>
+
     <!-- Section 2: Method-by-Method Deep Dive Cards -->
     <section class="dashboard-section">
       <div class="section-title">
@@ -107,6 +131,7 @@
   </div>
 
   <script src="data.js"></script>
+  <script src="world_map_data.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
