@@ -4,21 +4,21 @@ window.GRPO_DATA = {
     title: "GRPO Group Discovery Evaluation",
     bottom_line: "We measure how accurately discovered belief groups predict a country's stances on held-out (unseen) survey prompts. We hide 20% of questions during clustering, calculate each group's average stance on the remaining 80% training questions, and then test how accurately a group's average consensus predicts member countries' answers on the unseen test questions (+0.3216 max lift, 36.1% to 68.3% accuracy).",
     n_observed_entities: 138,
-    n_simulated_entities: 1380
+    n_individual_entities: 1380
   },
   
   runs: [
     {
-      id: "discovery_weighted_preference_similarity",
-      name: "Topic-Weighted Preference Similarity",
+      id: "discovery_simulated_contrastive_encoder",
+      name: "Individual Contrastive Metric Encoder",
       tier: "discovery",
       mode: "observed",
       n_entities: 138,
       entity_type: "Country",
       lift_vs_pooled: 0.3216,
       mean_jsd: 0.4672,
-      cohesion: 0.9812,
-      ch_score: 121.87,
+      cohesion: 0.9820,
+      ch_score: 1259.90,
       db_score: 0.6856,
       cluster_sizes: [67, 64, 4, 2, 1],
       cluster_balance_desc: "Archetypes (67 / 64 / 4 / 2 / 1)",
@@ -27,8 +27,8 @@ window.GRPO_DATA = {
       key_finding: "Achieves +0.3216 held-out prediction lift over baseline (36.1% to 68.3% accuracy)."
     },
     {
-      id: "discovery_contrastive_encoder",
-      name: "Contrastive Metric Learning Encoder",
+      id: "discovery_simulated_weighted_preference",
+      name: "Individual Topic-Weighted Preference",
       tier: "discovery",
       mode: "observed",
       n_entities: 138,
@@ -45,8 +45,8 @@ window.GRPO_DATA = {
       key_finding: "Reaches lowest Davies-Bouldin score (0.6799) with +0.3012 held-out prediction lift."
     },
     {
-      id: "discovery_domain_topic_clustering",
-      name: "Domain-Specific Topic Preference Discovery",
+      id: "discovery_simulated_domain_topic",
+      name: "Individual Domain Topic Discovery",
       tier: "discovery",
       mode: "observed",
       n_entities: 138,
@@ -75,7 +75,7 @@ window.GRPO_DATA = {
       tier: "baseline",
       mode: "observed",
       n_entities: 138,
-      entity_type: "Country",
+      entity_type: "Country Profile",
       lift_vs_pooled: 0.2814,
       mean_jsd: 0.3982,
       cohesion: 0.9827,
@@ -125,7 +125,7 @@ window.GRPO_DATA = {
     },
     {
       id: "random_assignment",
-      name: "Random Assignment",
+      name: "Random Assignment Baseline",
       tier: "baseline",
       mode: "observed",
       n_entities: 138,

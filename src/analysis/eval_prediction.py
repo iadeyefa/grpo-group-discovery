@@ -50,6 +50,9 @@ def train_test_split_by_entity(
                     test_rows.append(row)
                 else:
                     train_rows.append(row)
+
+        train_df = pd.DataFrame(train_rows).reset_index(drop=True) if train_rows else pd.DataFrame()
+        test_df = pd.DataFrame(test_rows).reset_index(drop=True) if test_rows else pd.DataFrame()
     else:
         # Single record per entity (e.g. blind mode): split entities 80/20
         entities = preference_df["entity_id"].unique()
@@ -57,14 +60,9 @@ def train_test_split_by_entity(
         n_test = max(1, int(n_entities * test_frac))
         test_entities = set(rng.choice(entities, size=n_test, replace=False))
 
-        for _, row in preference_df.iterrows():
-            if row["entity_id"] in test_entities:
-                test_rows.append(row)
-            else:
-                train_rows.append(row)
-
-    train_df = pd.DataFrame(train_rows).reset_index(drop=True) if train_rows else pd.DataFrame()
-    test_df = pd.DataFrame(test_rows).reset_index(drop=True) if test_rows else pd.DataFrame()
+        test_mask = preference_df["entity_id"].isin(test_entities)
+        train_df = preference_df[~test_mask].reset_index(drop=True)
+        test_df = preference_df[test_mask].reset_index(drop=True)
 
     logger.info(
         "Train/test split: %d train rows, %d test rows (%.1f%% held out)",

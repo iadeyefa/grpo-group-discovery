@@ -1,0 +1,27 @@
+# ==============================================================================
+# DISCOVERY METHOD: Individual User Topic-Weighted Preference Similarity
+# ==============================================================================
+run_name: discovery_individual_weighted_preference
+
+dataset:
+  name: Anthropic/llm_global_opinions
+  cache_dir: null
+  source_groups: null
+
+entities:
+  mode: individual
+  random_state: 42
+
+features:
+  method: weighted_opinion_vector
+  normalize: true
+
+clustering:
+  method: preference_similarity
+  n_clusters: 5
+  random_state: 42
+
+export:
+  output_dir: outputs
+  run_name: discovery_individual_weighted_preference
+  dataset_prefix: goqa_cluster

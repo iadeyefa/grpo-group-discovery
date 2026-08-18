@@ -66,6 +66,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Render Scorecard Table
   function renderScorecard() {
     let filteredRuns = [...data.runs];
+    if (currentModeFilter !== 'all') {
+      filteredRuns = filteredRuns.filter(run => run.mode === currentModeFilter);
+    }
 
     filteredRuns.sort((a, b) => {
       let valA = a[sortField];
